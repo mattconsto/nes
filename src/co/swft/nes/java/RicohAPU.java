@@ -1,7 +1,7 @@
-package co.swft.nes;
+package co.swft.nes.java;
 import java.util.Arrays;
 
-public class Ricoh2A03APU {
+public class RicohAPU {
 	byte[] pulse1   = new byte[4];
 	byte[] pulse2   = new byte[4];
 	byte[] triangle = new byte[3];

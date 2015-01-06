@@ -1,7 +1,11 @@
-package co.swft.nes;
-import java.io.File;
-import java.io.IOException;
+package co.swft.nes.java;
 
+import java.io.File;
+
+/**
+ * NES Emulator
+ * @author Matthew Consterdine
+ */
 public class Main {
 	public static void main(String[] args) {
 		/*
@@ -34,15 +38,12 @@ public class Main {
 		 *  complex
 		 */
 		try {
-	        NESFile file = new NESFile(new File("roms/Bomberman.nes"));
+	        NESCartridge file = new NESCartridge(new File("roms/Bomberman.nes"));
 	        System.out.println(file);
-	        Ricoh2A03CPU emulator = new Ricoh2A03CPU(file);
+	        RicohCPU emulator = new RicohCPU(file, new RicohPPU(file), new RicohAPU());
 	        System.out.println(emulator);
 	        emulator.run();
-        } catch (IOException e) {
-	        // TODO Auto-generated catch block
-	        e.printStackTrace();
-        } catch (NESFile.InvalidFileException e) {
+        } catch (Exception e) {
 	        // TODO Auto-generated catch block
 	        e.printStackTrace();
         }
