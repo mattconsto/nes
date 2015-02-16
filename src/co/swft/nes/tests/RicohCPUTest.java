@@ -83,4 +83,11 @@ public class RicohCPUTest {
 		assertEquals((byte) 0xFF, cpu.pullStack());
 		assertEquals((byte) 0x01, cpu.pullStack());
 	}
+	
+	@Test
+	public void testInstructionSet() {
+		RicohCPU cpu = new RicohCPU(null, null, null);
+		
+		// TODO: Write test
+	}
 }

@@ -4,6 +4,7 @@ import java.io.File;
 
 /**
  * NES Emulator
+ * 
  * @author Matthew Consterdine
  */
 public class Main {
@@ -38,11 +39,21 @@ public class Main {
 		 *  complex
 		 */
 		try {
-	        NESCartridge file = new NESCartridge(new File("roms/Bomberman.nes"));
-	        System.out.println(file);
-	        RicohCPU emulator = new RicohCPU(file, new RicohPPU(file), new RicohAPU());
-	        System.out.println(emulator);
-	        emulator.run();
+	        NESCartridge game = new NESCartridge(new File("roms/Bomberman.nes"));
+	        
+	        RicohAPU apu = new RicohAPU();
+	        RicohPPU ppu = new RicohPPU(game);
+	        RicohCPU cpu = new RicohCPU(game, ppu, apu);
+	        
+	        Thread apuT = new Thread(apu);
+	        Thread ppuT = new Thread(ppu);
+	        Thread cpuT = new Thread(cpu);
+	        
+	        System.out.println(game);
+	        
+	        apuT.start();
+	        ppuT.start();
+	        cpuT.start();
         } catch (Exception e) {
 	        // TODO Auto-generated catch block
 	        e.printStackTrace();

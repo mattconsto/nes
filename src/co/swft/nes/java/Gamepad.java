@@ -7,8 +7,8 @@ package co.swft.nes.java;
  * 
  * Gamepad features a 4021 Shift register:
  * > http://www.ti.com/lit/ds/symlink/cd4021b-q1.pdf
+ * 
  * @author Matthew Consterdine
- *
  */
 public class Gamepad {
 	protected byte status;

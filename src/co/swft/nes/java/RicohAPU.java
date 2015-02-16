@@ -1,7 +1,15 @@
 package co.swft.nes.java;
+
 import java.util.Arrays;
 
-public class RicohAPU {
+/**
+ * Ricoh APU
+ * 
+ * @author Matthew Consterdine
+ */
+public class RicohAPU implements Runnable {
+	private boolean running = false;
+	
 	byte[] pulse1   = new byte[4];
 	byte[] pulse2   = new byte[4];
 	byte[] triangle = new byte[3];
@@ -34,6 +42,14 @@ public class RicohAPU {
 	}
 	
 	public void run() {
+		running = true;
 		
+		while(running) {
+			
+		}
+	}
+	
+	public void stop() {
+		running = false;
 	}
 }
