@@ -84,7 +84,8 @@ public class RicohCPUTest {
 		assertEquals((byte) 0x01, cpu.pullStack());
 	}
 	
-	@Test
+	@SuppressWarnings("unused")
+    @Test
 	public void testInstructionSet() {
 		RicohCPU cpu = new RicohCPU(null, null, null);
 		

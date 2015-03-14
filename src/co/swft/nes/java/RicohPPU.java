@@ -154,7 +154,8 @@ public class RicohPPU implements Runnable {
 		writeMemoryMap((short) location, v);
 	}
 
-	public void run() {
+	@SuppressWarnings("unused")
+    public void run() {
 		// Get the monitors refresh rate
 	    int fps = GraphicsEnvironment.getLocalGraphicsEnvironment().getScreenDevices()[0].getDisplayMode().getRefreshRate();
 	    if(fps != 0) frameRate = fps;
