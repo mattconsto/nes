@@ -39,7 +39,7 @@ public class Main {
 		 *  complex
 		 */
 		try {
-	        NESCartridge game = new NESCartridge(new File("roms/Bomberman.nes"));
+	        NESCartridge game = new NESCartridge(new File("roms/hello.nes"));
 	        
 	        RicohAPU apu = new RicohAPU();
 	        RicohPPU ppu = new RicohPPU(game);

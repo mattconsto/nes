@@ -38,7 +38,7 @@ public class RicohCPU implements Runnable {
 	public byte[]  ram   = new byte[2 * 1024];	// Work RAM
 	
 	// Registers
-	public short   pc    = (short) 0xC000;		// Program Counter
+	public short   pc    = (short) 0x8000;		// Program Counter
 	public byte    sp    = (byte) 0xFD;			// Stack pointer
 	public byte    a     = 0;					// Accumulator
 	public byte    x     = 0;					// X index register
@@ -47,22 +47,22 @@ public class RicohCPU implements Runnable {
 	
 	// List of instructions so we can display helpful info as we run through the game.
 	public String[] instructionSet = {
-		"BRK impl", 	"ORA X,ind", 	"??? ---", 	"??? ---", 	"??? ---", 		"ORA zpg", 		"ASL zpg", 		"??? ---", 	"PHP impl", 	"ORA #", 		"ASL A", 		"??? ---", 	"??? ---", 		"ORA abs", 		"ASL abs", 		"??? ---", 
-		"BPL rel", 		"ORA ind,Y", 	"??? ---", 	"??? ---", 	"??? ---", 		"ORA zpg,X", 	"ASL zpg,X", 	"??? ---", 	"CLC impl", 	"ORA abs,Y", 	"??? ---", 		"??? ---", 	"??? ---", 		"ORA abs,X", 	"ASL abs,X", 	"??? ---", 
-		"JSR abs", 		"AND X,ind", 	"??? ---", 	"??? ---", 	"BIT zpg", 		"AND zpg", 		"ROL zpg", 		"??? ---", 	"PLP impl", 	"AND #", 		"ROL A", 		"??? ---", 	"BIT abs", 		"AND abs", 		"ROL abs", 		"??? ---", 
-		"BMI rel", 		"AND ind,Y", 	"??? ---", 	"??? ---", 	"??? ---", 		"AND zpg,X", 	"ROL zpg,X", 	"??? ---", 	"SEC impl", 	"AND abs,Y", 	"??? ---", 		"??? ---", 	"??? ---", 		"AND abs,X", 	"ROL abs,X", 	"??? ---", 
-		"RTI impl", 	"EOR X,ind", 	"??? ---", 	"??? ---", 	"??? ---", 		"EOR zpg", 		"LSR zpg", 		"??? ---", 	"PHA impl", 	"EOR #", 		"LSR A", 		"??? ---", 	"JMP abs", 		"EOR abs", 		"LSR abs", 		"??? ---", 
-		"BVC rel",	 	"EOR ind,Y", 	"??? ---", 	"??? ---", 	"??? ---", 		"EOR zpg,X", 	"LSR zpg,X", 	"??? ---", 	"CLI impl", 	"EOR abs,Y", 	"??? ---", 		"??? ---", 	"??? ---", 		"EOR abs,X", 	"LSR abs,X", 	"??? ---", 
-		"RTS impl", 	"ADC X,ind", 	"??? ---", 	"??? ---", 	"??? ---", 		"ADC zpg", 		"ROR zpg", 		"??? ---", 	"PLA impl", 	"ADC #", 		"ROR A", 		"??? ---", 	"JMP ind", 		"ADC abs", 		"ROR abs", 		"??? ---", 
-		"BVS rel", 		"ADC ind,Y", 	"??? ---", 	"??? ---", 	"??? ---", 		"ADC zpg,X", 	"ROR zpg,X", 	"??? ---", 	"SEI impl", 	"ADC abs,Y", 	"??? ---", 		"??? ---", 	"??? ---", 		"ADC abs,X", 	"ROR abs,X", 	"??? ---", 
-		"??? ---", 		"STA X,ind", 	"??? ---", 	"??? ---", 	"STY zpg", 		"STA zpg", 		"STX zpg", 		"??? ---", 	"DEY impl", 	"??? ---", 		"TXA impl", 	"??? ---", 	"STY abs", 		"STA abs", 		"STX abs", 		"??? ---", 
-		"BCC rel", 		"STA ind,Y", 	"??? ---", 	"??? ---", 	"STY zpg,X", 	"STA zpg,X", 	"STX zpg,Y", 	"??? ---", 	"TYA impl", 	"STA abs,Y", 	"TXS impl", 	"??? ---", 	"??? ---", 		"STA abs,X", 	"??? ---", 		"??? ---", 
-		"LDY #", 		"LDA X,ind", 	"LDX #", 	"??? ---", 	"LDY zpg", 		"LDA zpg", 		"LDX zpg", 		"??? ---", 	"TAY impl", 	"LDA #", 		"TAX impl", 	"??? ---", 	"LDY abs", 		"LDA abs", 		"LDX abs", 		"??? ---", 
-		"BCS rel",	 	"LDA ind,Y", 	"??? ---", 	"??? ---", 	"LDY zpg,X", 	"LDA zpg,X", 	"LDX zpg,Y", 	"??? ---", 	"CLV impl", 	"LDA abs,Y", 	"TSX impl", 	"??? ---", 	"LDY abs,X", 	"LDA abs,X", 	"LDX abs,Y", 	"??? ---", 
-		"CPY #", 		"CMP X,ind", 	"??? ---", 	"??? ---", 	"CPY zpg", 		"CMP zpg", 		"DEC zpg", 		"??? ---", 	"INY impl", 	"CMP #", 		"DEX impl", 	"??? ---", 	"CPY abs", 		"CMP abs", 		"DEC abs", 		"??? ---", 
-		"BNE rel", 		"CMP ind,Y", 	"??? ---", 	"??? ---", 	"??? ---", 		"CMP zpg,X", 	"DEC zpg,X", 	"??? ---", 	"CLD impl", 	"CMP abs,Y", 	"??? ---", 		"??? ---", 	"??? ---", 		"CMP abs,X", 	"DEC abs,X", 	"??? ---", 
-		"CPX #", 		"SBC X,ind", 	"??? ---", 	"??? ---", 	"CPX zpg", 		"SBC zpg", 		"INC zpg", 		"??? ---", 	"INX impl", 	"SBC #", 		"NOP impl", 	"??? ---", 	"CPX abs", 		"SBC abs", 		"INC abs", 		"??? ---", 
-		"BEQ rel", 		"SBC ind,Y", 	"??? ---", 	"??? ---", 	"??? ---", 		"SBC zpg,X", 	"INC zpg,X", 	"??? ---", 	"SED impl", 	"SBC abs,Y", 	"??? ---", 		"??? ---", 	"??? ---", 		"SBC abs,X", 	"INC abs,X", 	"??? ---"
+		"BRK\tImplicit",				"ORA ($%3$02x%2$02x,X)\tIndexed Indirect", 	"???\tUnknown", 			"???\tUnknown", 	"???\tUnknown", 			"ORA $%02x\tZero Page", 		"ASL $%02x\tZero Page", 		"???\tUnknown", 	"PHP\tImplicit", 	"ORA #%02x\tImmediate", 		"ASL Accumulator", 		"???\tUnknown", 	"???\tUnknown", 		"ORA $%3$02x%2$02x\tAbsolute", 		"ASL $%3$02x%2$02x\tAbsolute", 		"???\tUnknown", 
+		"BPL $%02x\tRelative",			"ORA ($%3$02x%2$02x),Y\tIndirect Indexed", 	"???\tUnknown", 			"???\tUnknown", 	"???\tUnknown", 			"ORA $%02x,X\tZero Page,X", 	"ASL $%02x,X\tZero Page,X", 	"???\tUnknown", 	"CLC\tImplicit", 	"ORA $%3$02x%2$02x,Y\tAbsolute,Y", 	"???\tUnknown", 		"???\tUnknown", 	"???\tUnknown", 		"ORA $%3$02x%2$02x,X\tAbsolute,X", 	"ASL $%3$02x%2$02x,X\tAbsolute,X", 	"???\tUnknown", 
+		"JSR $%3$02x%2$02x\tAbsolute",	"AND ($%3$02x%2$02x,X)\tIndexed Indirect", 	"???\tUnknown", 			"???\tUnknown", 	"BIT $%02x\tZero Page", 		"AND $%02x\tZero Page", 		"ROL $%02x\tZero Page", 		"???\tUnknown", 	"PLP\tImplicit", 	"AND #%02x\tImmediate", 		"ROL Accumulator", 		"???\tUnknown", 	"BIT $%3$02x%2$02x\tAbsolute", 		"AND $%3$02x%2$02x\tAbsolute", 		"ROL $%3$02x%2$02x\tAbsolute", 		"???\tUnknown", 
+		"BMI $%02x\tRelative", 			"AND ($%3$02x%2$02x),Y\tIndirect Indexed", 	"???\tUnknown", 			"???\tUnknown", 	"???\tUnknown", 			"AND $%02x,X\tZero Page,X", 	"ROL $%02x,X\tZero Page,X", 	"???\tUnknown", 	"SEC\tImplicit", 	"AND $%3$02x%2$02x,Y\tAbsolute,Y", 	"???\tUnknown", 		"???\tUnknown", 	"???\tUnknown", 		"AND $%3$02x%2$02x,X\tAbsolute,X", 	"ROL $%3$02x%2$02x,X\tAbsolute,X", 	"???\tUnknown", 
+		"RTI\tImplicit",				"EOR ($%3$02x%2$02x,X)\tIndexed Indirect", 	"???\tUnknown", 			"???\tUnknown", 	"???\tUnknown", 			"EOR $%02x\tZero Page", 		"LSR $%02x\tZero Page", 		"???\tUnknown", 	"PHA\tImplicit", 	"EOR #%02x\tImmediate", 		"LSR Accumulator", 		"???\tUnknown", 	"JMP $%3$02x%2$02x\tAbsolute", 		"EOR $%3$02x%2$02x\tAbsolute", 		"LSR $%3$02x%2$02x\tAbsolute", 		"???\tUnknown", 
+		"BVC $%02x\tRelative",			"EOR ($%3$02x%2$02x),Y\tIndirect Indexed", 	"???\tUnknown", 			"???\tUnknown", 	"???\tUnknown", 			"EOR $%02x,X\tZero Page,X", 	"LSR $%02x,X\tZero Page,X", 	"???\tUnknown", 	"CLI\tImplicit", 	"EOR $%3$02x%2$02x,Y\tAbsolute,Y", 	"???\tUnknown", 		"???\tUnknown", 	"???\tUnknown", 		"EOR $%3$02x%2$02x,X\tAbsolute,X", 	"LSR $%3$02x%2$02x,X\tAbsolute,X", 	"???\tUnknown", 
+		"RTS\tImplicit", 				"ADC ($%3$02x%2$02x,X)\tIndexed Indirect", 	"???\tUnknown", 			"???\tUnknown", 	"???\tUnknown", 			"ADC $%02x\tZero Page", 		"ROR $%02x\tZero Page", 		"???\tUnknown", 	"PLA\tImplicit", 	"ADC #%02x\tImmediate", 		"ROR Accumulator", 		"???\tUnknown", 	"JMP ($%3$02x%2$02x)\tIndirect", 		"ADC $%3$02x%2$02x\tAbsolute", 		"ROR $%3$02x%2$02x\tAbsolute", 		"???\tUnknown", 
+		"BVS $%02x\tRelative", 			"ADC ($%3$02x%2$02x),Y\tIndirect Indexed", 	"???\tUnknown", 			"???\tUnknown", 	"???\tUnknown", 			"ADC $%02x,X\tZero Page,X", 	"ROR $%02x,X\tZero Page,X", 	"???\tUnknown", 	"SEI\tImplicit", 	"ADC $%3$02x%2$02x,Y\tAbsolute,Y", 	"???\tUnknown", 		"???\tUnknown", 	"???\tUnknown", 		"ADC $%3$02x%2$02x,X\tAbsolute,X", 	"ROR $%3$02x%2$02x,X\tAbsolute,X", 	"???\tUnknown", 
+		"???\tUnknown", 				"STA ($%3$02x%2$02x,X)\tIndexed Indirect", 	"???\tUnknown", 			"???\tUnknown", 	"STY $%02x\tZero Page", 		"STA $%02x\tZero Page", 		"STX $%02x\tZero Page", 		"???\tUnknown", 	"DEY\tImplicit", 	"???\tUnknown", 		"TXA\tImplicit", 	"???\tUnknown", 	"STY $%3$02x%2$02x\tAbsolute", 		"STA $%3$02x%2$02x\tAbsolute", 		"STX $%3$02x%2$02x\tAbsolute", 		"???\tUnknown", 
+		"BCC $%02x\tRelative", 			"STA ($%3$02x%2$02x),Y\tIndirect Indexed", 	"???\tUnknown", 			"???\tUnknown", 	"STY $%02x,X\tZero Page,X", 	"STA $%02x,X\tZero Page,X", 	"STX $%02x,Y\tZero Page,Y", 	"???\tUnknown", 	"TYA\tImplicit", 	"STA $%3$02x%2$02x,Y\tAbsolute,Y", 	"TXS\tImplicit", 	"???\tUnknown", 	"???\tUnknown", 		"STA $%3$02x%2$02x,X\tAbsolute,X", 	"???\tUnknown", 		"???\tUnknown", 
+		"LDY #%02x\tImmediate", 		"LDA ($%3$02x%2$02x,X)\tIndexed Indirect", 	"LDX #%02x\tImmediate", 	"???\tUnknown", 	"LDY $%02x\tZero Page", 		"LDA $%02x\tZero Page", 		"LDX $%02x\tZero Page", 		"???\tUnknown", 	"TAY\tImplicit", 	"LDA #%02x\tImmediate", 		"TAX\tImplicit", 	"???\tUnknown", 	"LDY $%3$02x%2$02x\tAbsolute", 		"LDA $%3$02x%2$02x\tAbsolute", 		"LDX $%3$02x%2$02x\tAbsolute", 		"???\tUnknown", 
+		"BCS $%02x\tRelative",			"LDA ($%3$02x%2$02x),Y\tIndirect Indexed", 	"???\tUnknown", 			"???\tUnknown", 	"LDY $%02x,X\tZero Page,X", 	"LDA $%02x,X\tZero Page,X", 	"LDX $%02x,Y\tZero Page,Y", 	"???\tUnknown", 	"CLV\tImplicit", 	"LDA $%3$02x%2$02x,Y\tAbsolute,Y", 	"TSX\tImplicit", 	"???\tUnknown", 	"LDY $%3$02x%2$02x,X\tAbsolute,X", 	"LDA $%3$02x%2$02x,X\tAbsolute,X", 	"LDX $%3$02x%2$02x,Y\tAbsolute,Y", 	"???\tUnknown", 
+		"CPY #%02x\tImmediate", 		"CMP ($%3$02x%2$02x,X)\tIndexed Indirect", 	"???\tUnknown", 			"???\tUnknown", 	"CPY $%02x\tZero Page", 		"CMP $%02x\tZero Page", 		"DEC $%02x\tZero Page", 		"???\tUnknown", 	"INY\tImplicit", 	"CMP #%02x\tImmediate", 		"DEX\tImplicit", 	"???\tUnknown", 	"CPY $%3$02x%2$02x\tAbsolute", 		"CMP $%3$02x%2$02x\tAbsolute", 		"DEC $%3$02x%2$02x\tAbsolute", 		"???\tUnknown", 
+		"BNE $%02x\tRelative", 			"CMP ($%3$02x%2$02x),Y\tIndirect Indexed", 	"???\tUnknown", 			"???\tUnknown", 	"???\tUnknown", 			"CMP $%02x,X\tZero Page,X", 	"DEC $%02x,X\tZero Page,X", 	"???\tUnknown", 	"CLD\tImplicit", 	"CMP $%3$02x%2$02x,Y\tAbsolute,Y", 	"???\tUnknown", 		"???\tUnknown", 	"???\tUnknown", 		"CMP $%3$02x%2$02x,X\tAbsolute,X", 	"DEC $%3$02x%2$02x,X\tAbsolute,X", 	"???\tUnknown", 
+		"CPX #%02x\tImmediate", 		"SBC ($%3$02x%2$02x,X)\tIndexed Indirect", 	"???\tUnknown", 			"???\tUnknown", 	"CPX $%02x\tZero Page", 		"SBC $%02x\tZero Page", 		"INC $%02x\tZero Page", 		"???\tUnknown", 	"INX\tImplicit", 	"SBC #%02x\tImmediate", 		"NOP\tImplicit", 	"???\tUnknown", 	"CPX $%3$02x%2$02x\tAbsolute", 		"SBC $%3$02x%2$02x\tAbsolute", 		"INC $%3$02x%2$02x\tAbsolute", 		"???\tUnknown", 
+		"BEQ $%02x\tRelative", 			"SBC ($%3$02x%2$02x),Y\tIndirect Indexed", 	"???\tUnknown", 			"???\tUnknown", 	"???\tUnknown", 			"SBC $%02x,X\tZero Page,X", 	"INC $%02x,X\tZero Page,X", 	"???\tUnknown", 	"SED\tImplicit", 	"SBC $%3$02x%2$02x,Y\tAbsolute,Y", 	"???\tUnknown", 		"???\tUnknown", 	"???\tUnknown", 		"SBC $%3$02x%2$02x,X\tAbsolute,X", 	"INC $%3$02x%2$02x,X\tAbsolute,X", 	"???\tUnknown"
 	};
 
 	/**
@@ -241,7 +241,13 @@ public class RicohCPU implements Runnable {
 				case 5: // Background Scroll
 					ppu.scroll = v; break;
 				case 6: // PPU Memory Address
-					ppu.address = v; break;
+					if(ppu.addressState) {
+						ppu.address = (ppu.address & 0x00ff) + (v << 8);
+					} else {
+						ppu.address = (ppu.address & 0xff00) + v;
+					}
+					ppu.addressState = !ppu.addressState;
+					break;
 				case 7: // PPU Memory Data
 					ppu.videoRAM[ppu.address & 0xFF] = v;
 					ppu.address += BitTools.getBit(ppu.status, 2) ? 32 : 1;
@@ -360,23 +366,14 @@ public class RicohCPU implements Runnable {
 		
 		System.out.println("    [CPU] Starting Emulation");
 		
+		//System.out.println("\nCounter\tInstruction\tAddressing\t\n============================================================");
+		
 		// Run until we reach the end
 		for(; !getBreakFlag(); pc++) {
-			try{Thread.sleep(10);}catch(Exception e){}
+			//try{Thread.sleep(1);}catch(Exception e){}
 			
-//			boolean f = false;
-//			String string = String.format("%s:", String.format("%8s", Integer.toHexString(((pc & 0xFFFF) - 0x8000) % (game.prg.length - 16))).toUpperCase().replace(' ', '0'));
-//			for(String line : lines) {
-//				if(line.contains(string)) {
-//					System.out.println(line);
-//					f = true;
-//				}
-//			}
-//			if(!f) System.out.println("Not found: " + string);
-			
-			//System.out.println(instructionSet[readMemoryMap(pc)&0xFF]);
-			
-			//System.out.println(Integer.toHexString(((ram[0x0100 + (sp & 0xFF)] & 0xFF) << 8) | ((ram[0x0100 + ((sp & 0xFF) + 1)] & 0xFF)) & 0xFFFF));
+			// Print out log
+			//System.out.format("$%04x\t$%4$04x\t" + instructionSet[readMemoryMap(pc)&0xFF] + "\n", pc, readMemoryMap(pc+1)&0xFF, readMemoryMap(pc+2)&0xFF, (short) (pc + 0x10 - 0x8000));
 			
 			executeInstruction(readMemoryMap(pc));
 		}
@@ -952,14 +949,14 @@ public class RicohCPU implements Runnable {
 			case 0x4C: {
 				String from = String.format("%X (%X)", pc&0xFFFF, ((pc & 0xFFFF) - 0x8000) % (game.prg.length - 16));
 				pc = (short) (((readImmediate() & 0xFF) | ((readImmediate() & 0xFF) << 8) & 0xFFFF) - 1);
-				System.out.format("    [CPU] JMP 4C %X (%X) from %s%n", pc&0xFFFF, ((pc & 0xFFFF) - 0x8000) % (game.prg.length - 16), from);
+				//System.out.format("    [CPU] JMP 4C %X (%X) from %s%n", pc&0xFFFF, ((pc & 0xFFFF) - 0x8000) % (game.prg.length - 16), from);
 			} break;
 			
 			case 0x6C: {
 				String from = String.format("%X (%X)", pc&0xFFFF, ((pc & 0xFFFF) - 0x8000) % (game.prg.length - 16));
 				pc = (short) (((readImmediate() & 0xFF) | ((readImmediate() & 0xFF) << 8) & 0xFFFF) - 1);
-				pc = (short) (((readImmediate() & 0xFF) | ((readImmediate() & 0xFF) << 8) & 0xFFFF) - 1);
-				System.out.format("    [CPU] JMP 6C %X (%X) from %s%n", pc&0xFFFF, ((pc & 0xFFFF) - 0x8000) % (game.prg.length - 16), from);
+				//pc = (short) (((readImmediate() & 0xFF) | ((readImmediate() & 0xFF) << 8) & 0xFFFF) - 1);
+				//System.out.format("    [CPU] JMP 6C %X (%X) from %s%n", pc&0xFFFF, ((pc & 0xFFFF) - 0x8000) % (game.prg.length - 16), from);
 			} break;
 			
 			// JSR - Jump to Subroutine
@@ -969,7 +966,7 @@ public class RicohCPU implements Runnable {
 				pushStack((byte) ((pc & 0x00FF)));
 				pushStack((byte) ((pc & 0xFF00) >> 8));
 				pc = destination;
-				System.out.format("    [CPU] JSR to %X (%X) from %s%n", pc&0xFFFF, ((pc & 0xFFFF) - 0x8000) % (game.prg.length - 16), from);
+				//System.out.format("    [CPU] JSR to %X (%X) from %s%n", pc&0xFFFF, ((pc & 0xFFFF) - 0x8000) % (game.prg.length - 16), from);
 			} break;
 				
 			// LDA - Load Accumulator
@@ -1306,13 +1303,13 @@ public class RicohCPU implements Runnable {
 			case 0x40: {
 				s = pullStack();
 				pc = (short) (((pullStack() & 0xFF) << 8) | ((pullStack() & 0xFF)) & 0xFFFF);
-				System.out.format("    [CPU] RTI to %X%n", pc&0xFFFF);
+				//System.out.format("    [CPU] RTI to %X%n", pc&0xFFFF);
 			} break;
 				
 			// RTS - Return from Subroutine
 			case 0x60: {
 				pc = (short) (((pullStack() & 0xFF) << 8) | ((pullStack() & 0xFF)) & 0xFFFF);
-				System.out.format("    [CPU] RTS to %X%n", pc&0xFFFF);
+				//System.out.format("    [CPU] RTS to %X%n", pc&0xFFFF);
 			} break;
 				
 			// SBC - Subtract with Carry

@@ -81,7 +81,7 @@ public class NESCartridge extends CartridgeGame {
 		VsHardware             = code[13];
 		
 		// Crop of the header.
-		prg = Arrays.copyOfRange(code, 0, programROMPages * 0x4000);
-		chr = Arrays.copyOfRange(code, 16 + programROMPages * 0x4000, programROMPages * 0x4000 + characterROMpages * 0x2000);
+		prg = Arrays.copyOfRange(code, 16, 16 + programROMPages * 0x4000);
+		chr = Arrays.copyOfRange(code, 16 + programROMPages * 0x4000, 16 + programROMPages * 0x4000 + characterROMpages * 0x2000);
 	}
 }

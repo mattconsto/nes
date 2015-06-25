@@ -39,7 +39,8 @@ public class RicohPPU implements Runnable {
 	public byte oamAddress = 0;
 	public byte oamData    = 0;
 	public byte scroll     = 0;
-	public byte address    = 0;
+	public int  address    = 0;
+	public boolean addressState = true;
 	
 	// Misc stuff
 	private boolean running      = false;
@@ -159,7 +160,7 @@ public class RicohPPU implements Runnable {
 		// Get the monitors refresh rate
 	    int fps = GraphicsEnvironment.getLocalGraphicsEnvironment().getScreenDevices()[0].getDisplayMode().getRefreshRate();
 	    if(fps != 0) frameRate = fps;
-	    System.out.format("    [GPU] Running at %sHz", frameRate);
+	    System.out.format("    [GPU] Running at %sHz%n", frameRate);
 
 		running = true;
 		
@@ -168,10 +169,10 @@ public class RicohPPU implements Runnable {
 			
 			status = BitTools.toggleBit(status, 7);
 			
-    		// Draw black background
+    		// Draw solid background
     		for(int x = 0; x < image.getWidth(); x++) {
     			for(int y = 0; y < image.getHeight(); y++) {
-    				image.setRGB(x, y, 0x000000);
+    				image.setRGB(x, y, palletToRGB(readMemoryMap(0x3F00)));
     			}
     		}
     		
@@ -181,17 +182,45 @@ public class RicohPPU implements Runnable {
     		if(BitTools.getBit(mask, 3)) {
     			int bgAddress = BitTools.getBit(controller, 4) ? 0x1000 : 0x0000; // Ignored in 8x16 mode.
     			
+    			// Iterate over each nametable
+    			//for(int i = 0; i < 4; i++) {
+    				// Each cell
+    				for(int x = 0; x < 30; x++) {
+    					for(int y = 0; y < 32; y++) {
+    						byte patternid = readMemoryMap(0x2000 + x + y * 30);
+    						if(patternid != 0) {
+    		    				// For each pixel
+    		    				for(int j = 0; j < 8; j++) { // row
+    		    					byte planea = readMemoryMap((patternid << 4) + j);
+    		    					byte planeb = readMemoryMap((patternid << 4) + j + 8);
+    		    					for(int k = 0; k < 8; k++) { // column
+    		    						// Calculate color
+    		    						int color = 0;
+    		    						if(BitTools.getBit(planea, k)) color += 1;
+    		    						if(BitTools.getBit(planeb, k)) color += 2;
+    		    						
+    		    						if(color > 0) {
+    		    		    				image.setRGB(x*8+(8-k), y*8+j, 0xffffff);
+    		    						}
+    		    					}
+    		    				}
+    						}
+    					}
+    				}
+    			//}
+    				
     		}
     		
     		// Draw sprites
-    		if(BitTools.getBit(mask, 4)) {
+    		if(BitTools.getBit(mask, 4) || true) {
     			boolean spriteSize    = BitTools.getBit(controller, 5);
     			int     spriteAddress = BitTools.getBit(controller, 3) ? 0x1000 : 0x0000; // Ignored in 8x16 mode.
-    
+    			
     			for(int i = 0; i < 256; i+= 4) {
     				byte xpos  = OAMRAM[i + 3];
     				byte ypos  = OAMRAM[i];
-    				byte index = OAMRAM[i + 1];
+    				boolean bank = BitTools.getBit(OAMRAM[i + 1], 1);
+    				byte index = (byte) (OAMRAM[i + 1] & 0xfc >> 2);
     				
     				boolean flipH    = BitTools.getBit(OAMRAM[i + 2], 6);
     				boolean flipV    = BitTools.getBit(OAMRAM[i + 2], 7);
@@ -265,6 +294,8 @@ public class RicohPPU implements Runnable {
     			}
     		}
     		
+    		frame.repaint();
+    		
     		long delta = (1000 / frameRate) - (System.currentTimeMillis() - startTime);
     		if(delta > 0) try {
 	            Thread.sleep(delta);
@@ -275,30 +306,26 @@ public class RicohPPU implements Runnable {
 		}
 	}
 	
+	public static int palletToRGB(byte input) {
+		return new int[] {	755,637,700,447,044,120,222,704,777,333,750,503,403,660,320,777,
+                			357,653,310,360,467,657,764,027,760,276,000,200,666,444,707,014,
+                			003,567,757,070,077,022,053,507,000,420,747,510,407,006,740,000,
+                			000,140,555,031,572,326,770,630,020,036,040,111,773,737,430,473}[input];
+	}
+	
 	public void stop() {
 		running = false;
 	}
 	
 	public RicohPPU(NESCartridge game) {
 		this.game = game;
-		
+
 		frame.getContentPane().setBackground(Color.BLACK);
-		frame.setSize(256, 240);
-		GridBagLayout gridBagLayout = new GridBagLayout();
-		gridBagLayout.columnWeights = new double[]{1.0};
-		gridBagLayout.rowWeights = new double[]{1.0};
-		frame.getContentPane().setLayout(gridBagLayout);
+        frame.getContentPane().add(new JLabel(new ImageIcon(image)));
+        frame.pack();
 		frame.setLocationRelativeTo(null);
 		frame.setTitle("Emulator");
 	    frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-	    //frame.setIconImage();
-
-        JLabel label = new JLabel(new ImageIcon(image));
-        label.setBounds(0, 0, frame.getWidth(), frame.getHeight());
-        GridBagConstraints gbc_label = new GridBagConstraints();
-        gbc_label.fill = GridBagConstraints.BOTH;
-        frame.getContentPane().add(label, gbc_label);
-	    
-		//frame.setVisible(true);
+		frame.setVisible(true);
 	}
 }
