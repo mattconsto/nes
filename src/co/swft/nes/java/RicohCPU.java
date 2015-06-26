@@ -180,7 +180,7 @@ public class RicohCPU implements Runnable {
 				// Sound (0x4015) - Toggle channels
 				// Gamepad (0x4016-0x4017)
 				default:
-					System.out.format("!!! [APU] Sound not implemented");
+					System.out.format("!!! [APU] Sound not implemented\n");
 					return 0;
 			}
 		} else if(l < 0x6000) {
@@ -192,7 +192,7 @@ public class RicohCPU implements Runnable {
 			return game.save[l - 0x6000];
 		} else if(l <= 0xFFFF) {
 			// PRG-ROM
-			return game.prg[(l - 0x8000) % (game.prg.length - 16)];
+			return game.prg[(l - 0x8000) % game.prg.length];
 		} else {
 			System.out.println("!!! [CPU] Invalid Address.");
 		}
@@ -261,12 +261,12 @@ public class RicohCPU implements Runnable {
 				// DMC (0x4010-0x4013)
 				// Sprite (0x4014)
 				case 0x14:
-					System.out.format("!!! [CPU] not implemented");
+					System.out.format("!!! [CPU] not implemented\n");
 					break;
 				// Sound (0x4015) - Toggle channels
 				// Gamepad (0x4016-0x4017)
 				default:
-					System.out.format("!!! [APU] Sound not implemented");
+					System.out.format("!!! [APU] Sound not implemented\n");
 			}
 		} else if(l < 0x6000) {
 			// Cartridge Expansion ROM
@@ -366,14 +366,14 @@ public class RicohCPU implements Runnable {
 		
 		System.out.println("    [CPU] Starting Emulation");
 		
-		//System.out.println("\nCounter\tInstruction\tAddressing\t\n============================================================");
+		System.out.println("\nCounter\tInstruction\tAddressing\t\n============================================================");
 		
 		// Run until we reach the end
 		for(; !getBreakFlag(); pc++) {
 			//try{Thread.sleep(1);}catch(Exception e){}
 			
 			// Print out log
-			//System.out.format("$%04x\t$%4$04x\t" + instructionSet[readMemoryMap(pc)&0xFF] + "\n", pc, readMemoryMap(pc+1)&0xFF, readMemoryMap(pc+2)&0xFF, (short) (pc + 0x10 - 0x8000));
+			System.out.format("$%04x\t$%4$04x\t" + instructionSet[readMemoryMap(pc)&0xFF] + "\n", pc, readMemoryMap(pc+1)&0xFF, readMemoryMap(pc+2)&0xFF, (short) (pc + 0x10 - 0x8000));
 			
 			executeInstruction(readMemoryMap(pc));
 		}

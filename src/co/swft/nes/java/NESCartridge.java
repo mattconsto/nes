@@ -49,9 +49,9 @@ public class NESCartridge extends CartridgeGame {
 	    	throw new InvalidFileException("Invalid NES byteCode.");
 	    
 	    // Original iNES Stuff
-		int programROMPages    = code[4];
+		int programROMPages    = Math.max(code[4], 1);
 		
-		int characterROMpages  = code[5];
+		int characterROMpages  = Math.max(code[5], 1);
 		
 		fourScreenMode         = (code[6] & 0x08) == 1;
 		Trainer                = (code[6] & 0x04) == 1;
