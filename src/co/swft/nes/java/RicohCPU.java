@@ -103,25 +103,35 @@ public class RicohCPU implements Runnable {
 	 * Methods to retrieve bits from the status register. Calling them will return a boolean value
 	 * representing the selected bit from the status register.
 	 */
-	public boolean getCarryFlag()           {return BitTools.getBit(s, 0);}
-	public boolean getZeroFlag()            {return BitTools.getBit(s, 1);}
-	public boolean getInterruptFlag()       {return BitTools.getBit(s, 2);}
-	public boolean getDecimalFlag()         {return BitTools.getBit(s, 3);}
+	public boolean getCarryFlag()           {printFlags(); return BitTools.getBit(s, 0);}
+	public boolean getZeroFlag()            {printFlags(); return BitTools.getBit(s, 1);}
+	public boolean getInterruptFlag()       {printFlags(); return BitTools.getBit(s, 2);}
+	public boolean getDecimalFlag()         {printFlags(); return BitTools.getBit(s, 3);}
 	public boolean getBreakFlag()           {return BitTools.getBit(s, 4);}
-	public boolean getOverflowFlag()        {return BitTools.getBit(s, 5);}
-	public boolean getNegativeFlag()        {return BitTools.getBit(s, 6);}
+	public boolean getOverflowFlag()        {printFlags(); return BitTools.getBit(s, 5);}
+	public boolean getNegativeFlag()        {printFlags(); return BitTools.getBit(s, 6);}
+	
+	public void printFlags() {
+		System.out.format(
+			"    [CPU] c=%d, z=%d, i=%d, d=%d, b=%d, o=%d, n=%d.%n",
+			BitTools.getBit(s, 0)?1:0, BitTools.getBit(s, 1)?1:0,
+			BitTools.getBit(s, 2)?1:0, BitTools.getBit(s, 3)?1:0,
+			BitTools.getBit(s, 4)?1:0, BitTools.getBit(s, 5)?1:0,
+			BitTools.getBit(s, 6)?1:0
+		);
+	}
 	
 	/*
 	 * Methods to set bits in the status register. Calling them will set the selected bit in the 
 	 * status register to the value v.
 	 */
-	public void setCarryFlag(boolean v)     {s = BitTools.setBit(s, 0, v);}
-	public void setZeroFlag(boolean v)      {s = BitTools.setBit(s, 1, v);}
-	public void setInterruptFlag(boolean v) {s = BitTools.setBit(s, 2, v);}
-	public void setDecimalFlag(boolean v)   {s = BitTools.setBit(s, 3, v);}
-	public void setBreakFlag(boolean v)     {s = BitTools.setBit(s, 4, v);}
-	public void setOverflowFlag(boolean v)  {s = BitTools.setBit(s, 5, v);}
-	public void setNegativeFlag(boolean v)  {s = BitTools.setBit(s, 6, v);}
+	public void setCarryFlag(boolean v)     {s = BitTools.setBit(s, 0, v); printFlags();}
+	public void setZeroFlag(boolean v)      {s = BitTools.setBit(s, 1, v); printFlags();}
+	public void setInterruptFlag(boolean v) {s = BitTools.setBit(s, 2, v); printFlags();}
+	public void setDecimalFlag(boolean v)   {s = BitTools.setBit(s, 3, v); printFlags();}
+	public void setBreakFlag(boolean v)     {s = BitTools.setBit(s, 4, v); printFlags();}
+	public void setOverflowFlag(boolean v)  {s = BitTools.setBit(s, 5, v); printFlags();}
+	public void setNegativeFlag(boolean v)  {s = BitTools.setBit(s, 6, v); printFlags();}
 	
 	/*
 	 * Two methods that allow you too simply give them the byte, and they will calculate the flag
@@ -192,6 +202,7 @@ public class RicohCPU implements Runnable {
 			return game.save[l - 0x6000];
 		} else if(l <= 0xFFFF) {
 			// PRG-ROM
+			//System.out.format("read from %x = %x%n", (l - 0x8000) % game.prg.length, game.prg[(l - 0x8000) % game.prg.length]);
 			return game.prg[(l - 0x8000) % game.prg.length];
 		} else {
 			System.out.println("!!! [CPU] Invalid Address.");
@@ -241,6 +252,7 @@ public class RicohCPU implements Runnable {
 				case 5: // Background Scroll
 					ppu.scroll = v; break;
 				case 6: // PPU Memory Address
+					//System.out.println("Addr  " + Integer.toHexString(v));
 					if(ppu.addressState) {
 						ppu.address = (ppu.address & 0x00ff) + (v << 8);
 					} else {
@@ -249,6 +261,7 @@ public class RicohCPU implements Runnable {
 					ppu.addressState = !ppu.addressState;
 					break;
 				case 7: // PPU Memory Data
+					//System.out.println("Write " + Integer.toHexString(v));
 					ppu.writeMemoryMap(ppu.address & 0xffff, v);
 					ppu.address += BitTools.getBit(ppu.status, 2) ? 32 : 1;
 					break;
@@ -295,53 +308,65 @@ public class RicohCPU implements Runnable {
 		return readMemoryMap(++pc);
 	}
 	public byte readZeroPage() {
-		return readMemoryMap(readImmediate() & 0xFF);
+		return readMemoryMap(readImmediate());
 	}
 	public byte readZeroPageX() {
-		return readMemoryMap(((readImmediate() & 0xFF) + x) & 0xFF);
+		return readMemoryMap((readImmediate() + x) & 0xff); // wraps around
 	}
 	public byte readZeroPageY() {
-		return readMemoryMap(((readImmediate() & 0xFF) + y) & 0xFFFF);
+		return readMemoryMap(readImmediate() + y);
 	}
 	public byte readAbsolute() {
-		return readMemoryMap(((readImmediate() & 0xFF) | ((readImmediate() & 0xFF) << 8)) & 0xFFFF);
+		return readMemoryMap(readImmediate() | (readImmediate() << 8));
 	}
 	public byte readAbsoluteX() {
-		return readMemoryMap(((((readImmediate() & 0xFF) | ((readImmediate() & 0xFF) << 8))) & 0xFFFF + x) & 0xFFFF);
+		return readMemoryMap((readImmediate() | (readImmediate() << 8)) + x);
 	}
 	public byte readAbsoluteY() {
-		return readMemoryMap(((((readImmediate() & 0xFF) | ((readImmediate() & 0xFF) << 8))) & 0xFFFF + y) & 0xFFFF);
+		return readMemoryMap((readImmediate() | (readImmediate() << 8)) + y);
 	}
 	public byte readIndexedIndirect() {
-		return readMemoryMap((((readMemoryMap(readImmediate() & 0xFFFF) & 0xFF) + x) & 0xFF) & 0xFFFF);
+		byte address = readZeroPageX();
+		return readMemoryMap(readMemoryMap(address) | (readMemoryMap(address + 1) << 8));
 	}
 	public byte readIndirectIndexed() {
-		return readMemoryMap(((readMemoryMap(readImmediate() & 0xFFFF) & 0xFF) + y) & 0xFFFF);
+		byte address = readZeroPage();
+//		int a = (readMemoryMap(address) | (readMemoryMap(address + 1) << 8)) + y; // Here is my problem.
+//		int b = ((readMemoryMap(address & 0xff) & 0xff) | ((readMemoryMap((address & 0xff) + 1) & 0xff) << 8)) + y;
+//		if(a != b) {
+//			System.err.println(a);
+//			System.err.println(b);
+//			System.exit(1);
+//		}
+		System.out.println(((readMemoryMap(address & 0xff) & 0xff) | ((readMemoryMap((address & 0xff) + 1) & 0xff) << 8)) + y);
+		return readMemoryMap(((readMemoryMap(address & 0xff) & 0xff) | ((readMemoryMap((address & 0xff) + 1) & 0xff) << 8)) + y);
 	}
 
 	public void writeZeroPage(byte v) {
-		writeMemoryMap(readImmediate() & 0xFF, v);
+		writeMemoryMap(readImmediate(), v);
 	}
 	public void writeZeroPageX(byte v) {
-		writeMemoryMap(((readImmediate() & 0xFF) + x) & 0xFF, v);
+		writeMemoryMap((readImmediate() + x) & 0xff, v);
 	}
 	public void writeZeroPageY(byte v) {
-		writeMemoryMap(((readImmediate() & 0xFF) + y) & 0xFFFF, v);
+		writeMemoryMap(readImmediate() + y, v);
 	}
 	public void writeAbsolute(byte v) {
-		writeMemoryMap(((readImmediate() & 0xFF) | ((readImmediate() & 0xFF) << 8)) & 0xFFFF, v);
+		writeMemoryMap(readImmediate() | (readImmediate() << 8), v);
 	}
 	public void writeAbsoluteX(byte v) {
-		writeMemoryMap(((((readImmediate() & 0xFF) | ((readImmediate() & 0xFF) << 8))) & 0xFFFF + x) & 0xFFFF, v);
+		writeMemoryMap((readImmediate() | (readImmediate() << 8)) + x, v);
 	}
 	public void writeAbsoluteY(byte v) {
-		writeMemoryMap(((((readImmediate() & 0xFF) | ((readImmediate() & 0xFF) << 8))) & 0xFFFF + y) & 0xFFFF, v);
+		writeMemoryMap((readImmediate() | (readImmediate() << 8)) + y, v);
 	}
 	public void writeIndexedIndirect(byte v) {
-		writeMemoryMap((((readMemoryMap(readImmediate() & 0xFFFF) & 0xFF) + x) & 0xFF) & 0xFFFF, v);
+		byte address = readZeroPageX();
+		writeMemoryMap(readMemoryMap(address) | (readMemoryMap(address + 1) << 8), v);
 	}
 	public void writeIndirectIndexed(byte v) {
-		writeMemoryMap(((readMemoryMap(readImmediate() & 0xFFFF) & 0xFF) + y) & 0xFFFF, v);
+		byte address = readZeroPage();
+		writeMemoryMap((readMemoryMap(address) | (readMemoryMap(address + 1) << 8)) + y, v);
 	}
 	
 	/**
@@ -366,14 +391,14 @@ public class RicohCPU implements Runnable {
 		
 		System.out.println("    [CPU] Starting Emulation");
 		
-		System.out.println("\nCounter\tInstruction\tAddressing\t\n============================================================");
+		//System.out.println("\n          Counter\tInstruction\tAddressing\t\n============================================================");
 		
 		// Run until we reach the end
 		for(; !getBreakFlag(); pc++) {
-			//try{Thread.sleep(1);}catch(Exception e){}
+			try{Thread.sleep(1);}catch(Exception e){}
 			
 			// Print out log
-			System.out.format("$%04x\t$%4$04x\t" + instructionSet[readMemoryMap(pc)&0xFF] + "\n", pc, readMemoryMap(pc+1)&0xFF, readMemoryMap(pc+2)&0xFF, (short) (pc + 0x10 - 0x8000));
+			System.out.format("    [CPU] $%04x\t$%4$04x\t" + instructionSet[readMemoryMap(pc)&0xFF] + "\n", pc, readMemoryMap(pc+1)&0xFF, readMemoryMap(pc+2)&0xFF, (short) (pc + 0x10 - 0x8000));
 			
 			executeInstruction(readMemoryMap(pc));
 		}
@@ -587,6 +612,7 @@ public class RicohCPU implements Runnable {
 			// BCC - Branch if Carry Clear
 			case 0x90: {
 				if(!getCarryFlag()) {
+					System.out.println("    [CPU] Branched");
 					pc += readImmediate() + 1;
 				} else {
 					pc++;
@@ -596,6 +622,7 @@ public class RicohCPU implements Runnable {
 			// BCS - Branch if Carry Set
 			case 0xB0: {
 				if(getCarryFlag()) {
+					System.out.println("    [CPU] Branched");
 					pc += readImmediate() + 1;
 				} else {
 					pc++;
@@ -605,6 +632,7 @@ public class RicohCPU implements Runnable {
 			// BEQ - Branch if Equal
 			case 0xF0: {
 				if(getZeroFlag()) {
+					System.out.println("    [CPU] Branched");
 					pc += readImmediate() + 1;
 				} else {
 					pc++;
@@ -629,6 +657,7 @@ public class RicohCPU implements Runnable {
 			// BMI - Branch if Minus
 			case 0x30: {
 				if(getNegativeFlag()) {
+					System.out.println("    [CPU] Branched");
 					pc += readImmediate() + 1;
 				} else {
 					pc++;
@@ -638,6 +667,7 @@ public class RicohCPU implements Runnable {
 			// BNE - Branch if Not Equal
 			case 0xD0: {
 				if(!getZeroFlag()) {
+					System.out.println("    [CPU] Branched");
 					pc += readImmediate() + 1;
 				} else {
 					pc++;
@@ -647,6 +677,7 @@ public class RicohCPU implements Runnable {
 			// BPL - Branch if Positive
 			case 0x10: {
 				if(!getNegativeFlag()) {
+					System.out.println("    [CPU] Branched");
 					pc += readImmediate() + 1;
 				} else {
 					pc++;
@@ -666,6 +697,7 @@ public class RicohCPU implements Runnable {
 			// BVC - Branch if Overflow Clear
 			case 0x50: {
 				if(!getOverflowFlag()) {
+					System.out.println("    [CPU] Branched");
 					pc += readImmediate() + 1;
 				} else {
 					pc++;
@@ -675,6 +707,7 @@ public class RicohCPU implements Runnable {
 			// BVS - Branch if Overflow Set
 			case 0x70: {
 				if(getOverflowFlag()) {
+					System.out.println("    [CPU] Branched");
 					pc += readImmediate() + 1;
 				} else {
 					pc++;
@@ -955,7 +988,7 @@ public class RicohCPU implements Runnable {
 			case 0x6C: {
 				String from = String.format("%X (%X)", pc&0xFFFF, ((pc & 0xFFFF) - 0x8000) % (game.prg.length - 16));
 				pc = (short) (((readImmediate() & 0xFF) | ((readImmediate() & 0xFF) << 8) & 0xFFFF) - 1);
-				//pc = (short) (((readImmediate() & 0xFF) | ((readImmediate() & 0xFF) << 8) & 0xFFFF) - 1);
+				pc = (short) (((readImmediate() & 0xFF) | ((readImmediate() & 0xFF) << 8) & 0xFFFF) - 1);
 				//System.out.format("    [CPU] JMP 6C %X (%X) from %s%n", pc&0xFFFF, ((pc & 0xFFFF) - 0x8000) % (game.prg.length - 16), from);
 			} break;
 			
