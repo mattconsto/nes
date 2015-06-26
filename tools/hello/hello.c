@@ -8,6 +8,26 @@
 /* Includes */
 #include <nes.h>
 
+/* Writes the string to the screen */
+/* Note how the NES hardware itself automatically moves the position we write to the screen */
+void write_string(char *str)
+{
+	/* Position the cursor */
+	/* We only need to do this once */
+	/* This is actually 2 cells down since the first 8 pixels from the top of the screen is hidden */
+	*((unsigned char*)0x2006) = 0x20;
+	*((unsigned char*)0x2006) = 0x41;
+	/* Write the string */
+	while(*str)
+	{
+		/* Write a letter */
+		/* The compiler put a set of graphics that match ASCII */
+		*((unsigned char*)0x2007) = *str;
+		/* Advance pointer that reads from the string */
+		str++;
+	}
+}
+
 /* Program entry */
 int main()
 {
@@ -25,23 +45,7 @@ int main()
 	*((unsigned char*)0x2007) = 0x30;
 
 	/* We must write our message to the screen */
-	//write_string("Hello, NES!");
-	
-	*((unsigned char*)0x2006) = 0x20;
-	*((unsigned char*)0x2006) = 0x41;
-	*((unsigned char*)0x2007) = 'H';
-	*((unsigned char*)0x2007) = 'e';
-	*((unsigned char*)0x2007) = 'l';
-	*((unsigned char*)0x2007) = 'l';
-	*((unsigned char*)0x2007) = 'o';
-	*((unsigned char*)0x2007) = ',';
-	*((unsigned char*)0x2007) = ' ';
-	*((unsigned char*)0x2007) = 'W';
-	*((unsigned char*)0x2007) = 'o';
-	*((unsigned char*)0x2007) = 'r';
-	*((unsigned char*)0x2007) = 'l';
-	*((unsigned char*)0x2007) = 'd';
-	*((unsigned char*)0x2007) = '!';
+	write_string("Hello, NES!");
 
 	/* Set the screen position */
 	/* First value written sets the X offset and the second is the Y offset */

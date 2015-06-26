@@ -249,7 +249,7 @@ public class RicohCPU implements Runnable {
 					ppu.addressState = !ppu.addressState;
 					break;
 				case 7: // PPU Memory Data
-					ppu.videoRAM[ppu.address & 0xFF] = v;
+					ppu.writeMemoryMap(ppu.address & 0xffff, v);
 					ppu.address += BitTools.getBit(ppu.status, 2) ? 32 : 1;
 					break;
 			}

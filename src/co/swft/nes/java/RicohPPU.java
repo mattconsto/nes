@@ -169,10 +169,12 @@ public class RicohPPU implements Runnable {
 			
 			status = BitTools.toggleBit(status, 7);
 			
+			int bg = palletToRGB(readMemoryMap(0x3F00));
+			
     		// Draw solid background
     		for(int x = 0; x < image.getWidth(); x++) {
     			for(int y = 0; y < image.getHeight(); y++) {
-    				image.setRGB(x, y, palletToRGB(readMemoryMap(0x3F00)));
+    				image.setRGB(x, y, bg);
     			}
     		}
     		
@@ -200,7 +202,8 @@ public class RicohPPU implements Runnable {
     		    						if(BitTools.getBit(planeb, k)) color += 2;
     		    						
     		    						if(color > 0) {
-    		    		    				image.setRGB(x*8+(8-k), y*8+j, 0xffffff);
+    		    							// TODO: stop assuming pallet 0.
+    		    		    				image.setRGB(x*8+(8-k), y*8+j, palletToRGB(readMemoryMap(0x3f00 + color)));
     		    						}
     		    					}
     		    				}
@@ -211,31 +214,31 @@ public class RicohPPU implements Runnable {
     				
     		}
     		
-    		// Draw sprites
-    		if(BitTools.getBit(mask, 4) || true) {
-    			boolean spriteSize    = BitTools.getBit(controller, 5);
-    			int     spriteAddress = BitTools.getBit(controller, 3) ? 0x1000 : 0x0000; // Ignored in 8x16 mode.
-    			
-    			for(int i = 0; i < 256; i+= 4) {
-    				byte xpos  = OAMRAM[i + 3];
-    				byte ypos  = OAMRAM[i];
-    				boolean bank = BitTools.getBit(OAMRAM[i + 1], 1);
-    				byte index = (byte) (OAMRAM[i + 1] & 0xfc >> 2);
-    				
-    				boolean flipH    = BitTools.getBit(OAMRAM[i + 2], 6);
-    				boolean flipV    = BitTools.getBit(OAMRAM[i + 2], 7);
-    				boolean priority = BitTools.getBit(OAMRAM[i + 2], 5);
-    				int     pallet   = OAMRAM[i + 2] & 0x03;
-    				
-					for(int j = 0; j < 8; j++) {
-						byte data = readMemoryMap(spriteAddress + j);
-						for(int k = 0; k < 8; k++) {
-							if(BitTools.getBit(data, k))
-								image.setRGB(xpos + j, ypos + k, 0xFFFFFF);
-						}
-					}
-    			}
-    		}
+//    		// Draw sprites
+//    		if(BitTools.getBit(mask, 4) || true) {
+//    			boolean spriteSize    = BitTools.getBit(controller, 5);
+//    			int     spriteAddress = BitTools.getBit(controller, 3) ? 0x1000 : 0x0000; // Ignored in 8x16 mode.
+//    			
+//    			for(int i = 0; i < 256; i+= 4) {
+//    				byte xpos  = OAMRAM[i + 3];
+//    				byte ypos  = OAMRAM[i];
+//    				boolean bank = BitTools.getBit(OAMRAM[i + 1], 1);
+//    				byte index = (byte) (OAMRAM[i + 1] & 0xfc >> 2);
+//    				
+//    				boolean flipH    = BitTools.getBit(OAMRAM[i + 2], 6);
+//    				boolean flipV    = BitTools.getBit(OAMRAM[i + 2], 7);
+//    				boolean priority = BitTools.getBit(OAMRAM[i + 2], 5);
+//    				int     pallet   = OAMRAM[i + 2] & 0x03;
+//    				
+//					for(int j = 0; j < 8; j++) {
+//						byte data = readMemoryMap(spriteAddress + j);
+//						for(int k = 0; k < 8; k++) {
+//							if(BitTools.getBit(data, k))
+//								image.setRGB(xpos + j, ypos + k, 0xFFFFFF);
+//						}
+//					}
+//    			}
+//    		}
     		
     		// Convert image to greyscale
     		if(BitTools.getBit(mask, 0)) {
@@ -307,10 +310,10 @@ public class RicohPPU implements Runnable {
 	}
 	
 	public static int palletToRGB(byte input) {
-		return new int[] {	755,637,700,447,044,120,222,704,777,333,750,503,403,660,320,777,
-                			357,653,310,360,467,657,764,027,760,276,000,200,666,444,707,014,
-                			003,567,757,070,077,022,053,507,000,420,747,510,407,006,740,000,
-                			000,140,555,031,572,326,770,630,020,036,040,111,773,737,430,473}[input];
+		return new int[] {0x7C7C7C, 0x0000FC, 0x0000BC, 0x4428BC, 0x940084, 0xA80020, 0xA81000, 0x881400, 0x503000, 0x007800, 0x006800, 0x005800, 0x004058, 0x000000, 0x000000, 0x000000,
+            			  0xBCBCBC, 0x0078F8, 0x0058F8, 0x6844FC, 0xD800CC, 0xE40058, 0xF83800, 0xE45C10, 0xAC7C00, 0x00B800, 0x00A800, 0x00A844, 0x008888, 0x000000, 0x000000, 0x000000,
+            			  0xF8F8F8, 0x3CBCFC, 0x6888FC, 0x9878F8, 0xF878F8, 0xF85898, 0xF87858, 0xFCA044, 0xF8B800, 0xB8F818, 0x58D854, 0x58F898, 0x00E8D8, 0x787878, 0x000000, 0x000000,
+            			  0xFCFCFC, 0xA4E4FC, 0xB8B8F8, 0xD8B8F8, 0xF8B8F8, 0xF8A4C0, 0xF0D0B0, 0xFCE0A8, 0xF8D878, 0xD8F878, 0xB8F8B8, 0xB8F8D8, 0x00FCFC, 0xF8D8F8, 0x000000, 0x000000}[input];
 	}
 	
 	public void stop() {
