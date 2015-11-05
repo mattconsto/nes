@@ -1,12 +1,6 @@
 package co.swft.nes.java;
 
-import java.io.BufferedReader;
-import java.io.File;
-import java.io.FileNotFoundException;
-import java.io.FileReader;
-import java.io.IOException;
-import java.util.LinkedList;
-import java.util.List;
+import java.util.Arrays;
 
 import co.swft.common.BitTools;
 import co.swft.common.TableBuilder;
@@ -29,21 +23,79 @@ import co.swft.common.TableBuilder;
  * @author Matthew Consterdine
  */
 public class RicohCPU implements Runnable {
-	// Hardware
-	public NESCartridge game;
-	public RicohPPU     ppu;
-	public RicohAPU     apu;
+	public State        state;
 	
-	// RAM
-	public byte[]  ram   = new byte[2 * 1024];	// Work RAM
-	
-	// Registers
-	public short   pc    = (short) 0x8000;		// Program Counter
-	public byte    sp    = (byte) 0xFD;			// Stack pointer
-	public byte    a     = 0;					// Accumulator
-	public byte    x     = 0;					// X index register
-	public byte    y     = 0;					// Y index register
-	public byte    s     = (byte) 0x02;			// Status register
+	public class State implements Cloneable {
+		// Hardware
+		public NESCartridge game;
+		public RicohPPU     ppu;
+		public RicohAPU     apu;
+		
+		public byte[]  ram   = new byte[2 * 1024];	// Work RAM
+		public short   pc    = (short) 0x8000;		// Program Counter
+		public byte    sp    = (byte) 0xFD;			// Stack pointer
+		public byte    a     = 0;					// Accumulator
+		public byte    x     = 0;					// X index register
+		public byte    y     = 0;					// Y index register
+		public byte    s     = (byte) 0x02;			// Status register
+
+		public State(NESCartridge game, RicohPPU ppu, RicohAPU apu, byte[] ram, short pc, byte sp, byte a, byte x, byte y, byte s) {
+	        this.game = game;
+	        this.ppu = ppu;
+	        this.apu = apu;
+	        
+	        this.ram = ram;
+	        this.pc = pc;
+	        this.sp = sp;
+	        this.a = a;
+	        this.x = x;
+	        this.y = y;
+	        this.s = s;
+        }
+		
+		public State() {}
+
+		@Override
+		public String toString() {
+			TableBuilder tableBuilder = new TableBuilder();
+			
+			tableBuilder.addRow("programCounter", Integer.toHexString(pc&0xFFFF));
+			tableBuilder.addRow("stackPointer",   Integer.toHexString(0x0100 + sp&0xFF));
+			tableBuilder.addRow("accumulator",    Integer.toHexString(a));
+			tableBuilder.addRow("indexX",         Integer.toHexString(x));
+			tableBuilder.addRow("indexY",         Integer.toHexString(y));
+			tableBuilder.addRow("status",         Integer.toBinaryString(s));
+			
+			return tableBuilder.toString();
+		}
+		
+		@Override
+		public boolean equals(Object obj) {
+			// Check that both are States
+			if(obj.getClass() == State.class) {
+				// Convert once to save repetition
+				State other = (State) obj;
+				
+				return other.game.equals(this.game) &&
+					   other.ppu.equals(this.ppu) &&
+					   other.apu.equals(this.apu) &&
+					   Arrays.equals(other.ram, this.ram) &&
+					   other.pc == this.pc &&
+					   other.sp == this.sp &&
+					   other.a  == this.a  &&
+					   other.x  == this.x  &&
+					   other.y  == this.y  &&
+					   other.s  == this.s;
+			} else {
+				return false;
+			}
+		}
+		
+		@Override
+		protected State clone() {
+		    return new State(game, ppu, apu, ram, pc, sp, a, x, y, s);
+		}
+	}
 	
 	// List of instructions so we can display helpful info as we run through the game.
 	public String[] instructionSet = {
@@ -72,9 +124,10 @@ public class RicohCPU implements Runnable {
 	 * @param apu APU
 	 */
 	public RicohCPU(NESCartridge game, RicohPPU ppu, RicohAPU apu) {
-		this.game = game;
-		this.ppu  = ppu;
-		this.apu  = apu;
+		this.state = new State();
+		this.state.game  = game;
+		this.state.ppu   = ppu;
+		this.state.apu   = apu;
 	}
 	
 	/**
@@ -84,8 +137,8 @@ public class RicohCPU implements Runnable {
 	 * @param input The byte we want to push to the stack.
 	 */
 	public void pushStack(byte input) {
-		ram[0x0100 + (sp & 0xFF)] = input;
-		sp = (byte) ((sp & 0xFF) - 1);
+		state.ram[0x0100 + (state.sp & 0xFF)] = input;
+		state.sp = (byte) ((state.sp & 0xFF) - 1);
 	}
 	
 	/**
@@ -95,29 +148,29 @@ public class RicohCPU implements Runnable {
 	 * @return The byte pulled from the stack.
 	 */
 	public byte pullStack() {
-		sp = (byte) ((sp & 0xFF) + 1);
-		return ram[0x0100 + (sp & 0xFF)];
+		state.sp = (byte) ((state.sp & 0xFF) + 1);
+		return state.ram[0x0100 + (state.sp & 0xFF)];
 	}
 	
 	/*
 	 * Methods to retrieve bits from the status register. Calling them will return a boolean value
 	 * representing the selected bit from the status register.
 	 */
-	public boolean getCarryFlag()           {printFlags(); return BitTools.getBit(s, 0);}
-	public boolean getZeroFlag()            {printFlags(); return BitTools.getBit(s, 1);}
-	public boolean getInterruptFlag()       {printFlags(); return BitTools.getBit(s, 2);}
-	public boolean getDecimalFlag()         {printFlags(); return BitTools.getBit(s, 3);}
-	public boolean getBreakFlag()           {return BitTools.getBit(s, 4);}
-	public boolean getOverflowFlag()        {printFlags(); return BitTools.getBit(s, 5);}
-	public boolean getNegativeFlag()        {printFlags(); return BitTools.getBit(s, 6);}
+	public boolean getCarryFlag()           {printFlags(); return BitTools.getBit(state.s, 0);}
+	public boolean getZeroFlag()            {printFlags(); return BitTools.getBit(state.s, 1);}
+	public boolean getInterruptFlag()       {printFlags(); return BitTools.getBit(state.s, 2);}
+	public boolean getDecimalFlag()         {printFlags(); return BitTools.getBit(state.s, 3);}
+	public boolean getBreakFlag()           {return BitTools.getBit(state.s, 4);}
+	public boolean getOverflowFlag()        {printFlags(); return BitTools.getBit(state.s, 5);}
+	public boolean getNegativeFlag()        {printFlags(); return BitTools.getBit(state.s, 6);}
 	
 	public void printFlags() {
 		System.out.format(
 			"    [CPU] c=%d, z=%d, i=%d, d=%d, b=%d, o=%d, n=%d.%n",
-			BitTools.getBit(s, 0)?1:0, BitTools.getBit(s, 1)?1:0,
-			BitTools.getBit(s, 2)?1:0, BitTools.getBit(s, 3)?1:0,
-			BitTools.getBit(s, 4)?1:0, BitTools.getBit(s, 5)?1:0,
-			BitTools.getBit(s, 6)?1:0
+			BitTools.getBit(state.s, 0)?1:0, BitTools.getBit(state.s, 1)?1:0,
+			BitTools.getBit(state.s, 2)?1:0, BitTools.getBit(state.s, 3)?1:0,
+			BitTools.getBit(state.s, 4)?1:0, BitTools.getBit(state.s, 5)?1:0,
+			BitTools.getBit(state.s, 6)?1:0
 		);
 	}
 	
@@ -125,20 +178,20 @@ public class RicohCPU implements Runnable {
 	 * Methods to set bits in the status register. Calling them will set the selected bit in the 
 	 * status register to the value v.
 	 */
-	public void setCarryFlag(boolean v)     {s = BitTools.setBit(s, 0, v); printFlags();}
-	public void setZeroFlag(boolean v)      {s = BitTools.setBit(s, 1, v); printFlags();}
-	public void setInterruptFlag(boolean v) {s = BitTools.setBit(s, 2, v); printFlags();}
-	public void setDecimalFlag(boolean v)   {s = BitTools.setBit(s, 3, v); printFlags();}
-	public void setBreakFlag(boolean v)     {s = BitTools.setBit(s, 4, v); printFlags();}
-	public void setOverflowFlag(boolean v)  {s = BitTools.setBit(s, 5, v); printFlags();}
-	public void setNegativeFlag(boolean v)  {s = BitTools.setBit(s, 6, v); printFlags();}
+	public void setCarryFlag(boolean v)     {state.s = BitTools.setBit(state.s, 0, v); printFlags();}
+	public void setZeroFlag(boolean v)      {state.s = BitTools.setBit(state.s, 1, v); printFlags();}
+	public void setInterruptFlag(boolean v) {state.s = BitTools.setBit(state.s, 2, v); printFlags();}
+	public void setDecimalFlag(boolean v)   {state.s = BitTools.setBit(state.s, 3, v); printFlags();}
+	public void setBreakFlag(boolean v)     {state.s = BitTools.setBit(state.s, 4, v); printFlags();}
+	public void setOverflowFlag(boolean v)  {state.s = BitTools.setBit(state.s, 5, v); printFlags();}
+	public void setNegativeFlag(boolean v)  {state.s = BitTools.setBit(state.s, 6, v); printFlags();}
 	
 	/*
 	 * Two methods that allow you too simply give them the byte, and they will calculate the flag
 	 * themselves. Saves a little typing.
 	 */
-	public void setZeroFlag(byte d)         {s = BitTools.setBit(s, 1, d == 0);}
-	public void setNegativeFlag(byte d)     {s = BitTools.setBit(s, 6, BitTools.getBit(d, 7));}
+	public void setZeroFlag(byte d)         {state.s = BitTools.setBit(state.s, 1, d == 0);}
+	public void setNegativeFlag(byte d)     {state.s = BitTools.setBit(state.s, 6, BitTools.getBit(d, 7));}
 	
 	/**
 	 * Get a byte from the memory map.
@@ -150,7 +203,7 @@ public class RicohCPU implements Runnable {
 		
 		if       (l < 0x2000) {
 		    // Direct work ram. Mirrored 3 times
-			return ram[l % 0x800];
+			return state.ram[l % 0x800];
 		} else if(l < 0x4000) {
 			// PPU Control Registers. Mirrored 1023 times
 			l = (short) (l % 8);
@@ -160,21 +213,21 @@ public class RicohCPU implements Runnable {
 				case 1: // PPU Control Register 2
 					System.out.println("!!! [CPU] Write only c[1]!"); break;
 				case 2: // PPU Status Register
-					byte temp  = ppu.status;
+					byte temp  = state.ppu.status;
 					// Clear VBLANK
-					ppu.status = BitTools.setBit(temp, 7, false);
+					state.ppu.status = BitTools.setBit(temp, 7, false);
 					return temp;
 				case 3: // Sprite Memory Access
 					System.out.println("!!! [CPU] Write only c[3]!"); break;
 				case 4: // Sprite Memory Data
-					return ppu.OAMRAM[ppu.oamAddress & 0xFF];
+					return state.ppu.OAMRAM[state.ppu.oamAddress & 0xFF];
 				case 5: // Background Scroll
 					System.out.println("!!! [CPU] Write only c[5]!"); break;
 				case 6: // PPU Memory Address
 					System.out.println("!!! [CPU] Write only c[6]!"); break;
 				case 7: // PPU Memory Data
-					ppu.address += BitTools.getBit(ppu.status, 2) ? 32 : 1;
-					return ppu.videoRAM[ppu.address & 0xFF];
+					state.ppu.address += BitTools.getBit(state.ppu.status, 2) ? 32 : 1;
+					return state.ppu.videoRAM[state.ppu.address & 0xFF];
 				default:
 					System.out.println("!!! [CPU] Something really bad has happened to modulo");
 					return 0;
@@ -199,11 +252,11 @@ public class RicohCPU implements Runnable {
 			return 0;
 		} else if(l < 0x8000) {
 			// SRAM
-			return game.save[l - 0x6000];
+			return state.game.save[l - 0x6000];
 		} else if(l <= 0xFFFF) {
 			// PRG-ROM
 			//System.out.format("read from %x = %x%n", (l - 0x8000) % game.prg.length, game.prg[(l - 0x8000) % game.prg.length]);
-			return game.prg[(l - 0x8000) % game.prg.length];
+			return state.game.prg[(l - 0x8000) % state.game.prg.length];
 		} else {
 			System.out.println("!!! [CPU] Invalid Address.");
 		}
@@ -232,38 +285,38 @@ public class RicohCPU implements Runnable {
 		
 		if       (l < 0x2000) {
 		    // Direct work ram. Mirrored 3 times
-			ram[l % 0x800] = v;
+			state.ram[l % 0x800] = v;
 		} else if(l < 0x4000) {
 			// PPU Control Registers. Mirrored 1023 times
 			l = (short) ((l - 0x2000) % 8);
 			switch(l) {
 				case 0: // PPU Control Register 1
-					ppu.controller = v; break;
+					state.ppu.controller = v; break;
 				case 1: // PPU Control Register 2
-					ppu.mask = v; break;
+					state.ppu.mask = v; break;
 				case 2: // PPU Status Register
 					System.out.println("!!! Read only c[2]!"); break;
 				case 3: // Sprite Memory Access
-					ppu.oamAddress = v; break;
+					state.ppu.oamAddress = v; break;
 				case 4: // Sprite Memory Data
-					ppu.OAMRAM[ppu.oamAddress & 0xFF] = v;
-					ppu.oamAddress++;
+					state.ppu.OAMRAM[state.ppu.oamAddress & 0xFF] = v;
+					state.ppu.oamAddress++;
 					break;
 				case 5: // Background Scroll
-					ppu.scroll = v; break;
+					state.ppu.scroll = v; break;
 				case 6: // PPU Memory Address
 					//System.out.println("Addr  " + Integer.toHexString(v));
-					if(ppu.addressState) {
-						ppu.address = (ppu.address & 0x00ff) + (v << 8);
+					if(state.ppu.addressState) {
+						state.ppu.address = (state.ppu.address & 0x00ff) + (v << 8);
 					} else {
-						ppu.address = (ppu.address & 0xff00) + v;
+						state.ppu.address = (state.ppu.address & 0xff00) + v;
 					}
-					ppu.addressState = !ppu.addressState;
+					state.ppu.addressState = !state.ppu.addressState;
 					break;
 				case 7: // PPU Memory Data
 					//System.out.println("Write " + Integer.toHexString(v));
-					ppu.writeMemoryMap(ppu.address & 0xffff, v);
-					ppu.address += BitTools.getBit(ppu.status, 2) ? 32 : 1;
+					state.ppu.writeMemoryMap(state.ppu.address & 0xffff, v);
+					state.ppu.address += BitTools.getBit(state.ppu.status, 2) ? 32 : 1;
 					break;
 			}
 		} else if(l < 0x4020) {
@@ -286,7 +339,7 @@ public class RicohCPU implements Runnable {
 			System.out.println("!!! [CPU] Cannot write to Cartridge ROM.");
 		} else if(l < 0x8000) {
 			// SRAM
-			game.save[l - 0x6000] = v;
+			state.game.save[l - 0x6000] = v;
 		} else if(l <= 0xFFFF) {
 			// PRG-ROM
 			System.out.println("!!! [CPU] Cannot write to PRG-ROM.");
@@ -304,26 +357,56 @@ public class RicohCPU implements Runnable {
 		writeMemoryMap((short) location, v);
 	}
 	
+	public short addressImmediate() {
+		return ++state.pc;
+	}
+	public short addressZeroPage() {
+		return readImmediate();
+	}
+	public short addressZeroPageX() {
+		return (short) ((readImmediate() + state.x) & 0xff); // wraps around
+	}
+	public short addressZeroPageY() {
+		return (short) (readImmediate() + state.y);
+	}
+	public short addressAbsolute() {
+		return (short) (readImmediate() | (readImmediate() << 8));
+	}
+	public short addressAbsoluteX() {
+		return (short) ((readImmediate() | (readImmediate() << 8)) + state.x);
+	}
+	public short addressAbsoluteY() {
+		return (short) ((readImmediate() | (readImmediate() << 8)) + state.y);
+	}
+	public short addressIndexedIndirect() {
+		byte address = readZeroPageX();
+		return (short) (readMemoryMap(address) | (readMemoryMap(address + 1) << 8));
+	}
+	public short addressIndirectIndexed() {
+		byte address = readZeroPage();
+		return (short) (((readMemoryMap(address & 0xff) & 0xff) | ((readMemoryMap((address & 0xff) + 1) & 0xff) << 8)) + state.y);
+	}
+	
 	public byte readImmediate() {
-		return readMemoryMap(++pc);
+		return readMemoryMap(++state.pc);
 	}
 	public byte readZeroPage() {
 		return readMemoryMap(readImmediate());
 	}
 	public byte readZeroPageX() {
-		return readMemoryMap((readImmediate() + x) & 0xff); // wraps around
+		return readMemoryMap((readImmediate() + state.x) & 0xff); // wraps around
 	}
 	public byte readZeroPageY() {
-		return readMemoryMap(readImmediate() + y);
+		return readMemoryMap(readImmediate() + state.y);
 	}
 	public byte readAbsolute() {
 		return readMemoryMap(readImmediate() | (readImmediate() << 8));
 	}
 	public byte readAbsoluteX() {
-		return readMemoryMap((readImmediate() | (readImmediate() << 8)) + x);
+		return readMemoryMap((readImmediate() | (readImmediate() << 8)) + state.x);
 	}
 	public byte readAbsoluteY() {
-		return readMemoryMap((readImmediate() | (readImmediate() << 8)) + y);
+		return readMemoryMap((readImmediate() | (readImmediate() << 8)) + state.y);
 	}
 	public byte readIndexedIndirect() {
 		byte address = readZeroPageX();
@@ -338,27 +421,27 @@ public class RicohCPU implements Runnable {
 //			System.err.println(b);
 //			System.exit(1);
 //		}
-		System.out.println(((readMemoryMap(address & 0xff) & 0xff) | ((readMemoryMap((address & 0xff) + 1) & 0xff) << 8)) + y);
-		return readMemoryMap(((readMemoryMap(address & 0xff) & 0xff) | ((readMemoryMap((address & 0xff) + 1) & 0xff) << 8)) + y);
+//		System.out.println(((readMemoryMap(address & 0xff) & 0xff) | ((readMemoryMap((address & 0xff) + 1) & 0xff) << 8)) + state.y);
+		return readMemoryMap(((readMemoryMap(address & 0xff) & 0xff) | ((readMemoryMap((address & 0xff) + 1) & 0xff) << 8)) + state.y);
 	}
 
 	public void writeZeroPage(byte v) {
 		writeMemoryMap(readImmediate(), v);
 	}
 	public void writeZeroPageX(byte v) {
-		writeMemoryMap((readImmediate() + x) & 0xff, v);
+		writeMemoryMap((readImmediate() + state.x) & 0xff, v);
 	}
 	public void writeZeroPageY(byte v) {
-		writeMemoryMap(readImmediate() + y, v);
+		writeMemoryMap(readImmediate() + state.y, v);
 	}
 	public void writeAbsolute(byte v) {
 		writeMemoryMap(readImmediate() | (readImmediate() << 8), v);
 	}
 	public void writeAbsoluteX(byte v) {
-		writeMemoryMap((readImmediate() | (readImmediate() << 8)) + x, v);
+		writeMemoryMap((readImmediate() | (readImmediate() << 8)) + state.x, v);
 	}
 	public void writeAbsoluteY(byte v) {
-		writeMemoryMap((readImmediate() | (readImmediate() << 8)) + y, v);
+		writeMemoryMap((readImmediate() | (readImmediate() << 8)) + state.y, v);
 	}
 	public void writeIndexedIndirect(byte v) {
 		byte address = readZeroPageX();
@@ -366,41 +449,33 @@ public class RicohCPU implements Runnable {
 	}
 	public void writeIndirectIndexed(byte v) {
 		byte address = readZeroPage();
-		writeMemoryMap((readMemoryMap(address) | (readMemoryMap(address + 1) << 8)) + y, v);
+		writeMemoryMap((readMemoryMap(address) | (readMemoryMap(address + 1) << 8)) + state.y, v);
 	}
 	
 	/**
 	 * run() starts the emulation.
 	 */
 	public void run() {
-		List<String> lines = new LinkedList<String>();
-		BufferedReader in;
-        try {
-    		in = new BufferedReader(new FileReader(new File("roms/Bomberman.asm")));
-			String line;
-			while((line = in.readLine()) != null){
-			    lines.add(line);
-			}
-        } catch (FileNotFoundException e) {
-	        // TODO Auto-generated catch block
-	        e.printStackTrace();
-        } catch (IOException e) {
-	        // TODO Auto-generated catch block
-	        e.printStackTrace();
-        }
-		
 		System.out.println("    [CPU] Starting Emulation");
 		
-		//System.out.println("\n          Counter\tInstruction\tAddressing\t\n============================================================");
+		System.out.println("\n          Counter\tInstruction\tAddressing\t\n============================================================");
 		
 		// Run until we reach the end
-		for(; !getBreakFlag(); pc++) {
-			try{Thread.sleep(1);}catch(Exception e){}
+		for(; !getBreakFlag(); state.pc++) {
+			//try{Thread.sleep(1);}catch(Exception e){}
 			
 			// Print out log
-			System.out.format("    [CPU] $%04x\t$%4$04x\t" + instructionSet[readMemoryMap(pc)&0xFF] + "\n", pc, readMemoryMap(pc+1)&0xFF, readMemoryMap(pc+2)&0xFF, (short) (pc + 0x10 - 0x8000));
+			System.out.format("    [CPU] $%04x\t$%4$04x\t" + instructionSet[readMemoryMap(state.pc)&0xFF] + "\n", state.pc, readMemoryMap(state.pc+1)&0xFF, readMemoryMap(state.pc+2)&0xFF, (short) (state.pc + 0x10 - 0x8000));
 			
-			executeInstruction(readMemoryMap(pc));
+//			State old = state.clone();
+			
+			executeInstruction(readMemoryMap(state.pc));
+			
+			// Automatically end emulation if we start to loop without any changes.
+//			if(old.equals(state)) {
+//				System.out.println("    [CPU] Ended Emulation");
+//				break;
+//			}
 		}
 	}
 	
@@ -409,164 +484,164 @@ public class RicohCPU implements Runnable {
 			// ADC - Add with Carry
 			case 0x69: {
 				byte b      = readImmediate();
-				byte result = (byte) (a + b + (getCarryFlag() ? 1 : 0));
-				int  count  = a + b + (getCarryFlag() ? 1 : 0);
+				byte result = (byte) (state.a + b + (getCarryFlag() ? 1 : 0));
+				int  count  = state.a + b + (getCarryFlag() ? 1 : 0);
 				
 				setCarryFlag(count < -128 || count > 127);
 				setZeroFlag(result);
 				setOverflowFlag(count < -128 || count > 127); //almost certainly wrong
 				setNegativeFlag(result);
-				a = result;
+				state.a = result;
 			} break;
 			
 			case 0x65: {
 				byte b      = readZeroPage();
-				byte result = (byte) (a + b + (getCarryFlag() ? 1 : 0));
-				int  count  = a + b + (getCarryFlag() ? 1 : 0);
+				byte result = (byte) (state.a + b + (getCarryFlag() ? 1 : 0));
+				int  count  = state.a + b + (getCarryFlag() ? 1 : 0);
 				
 				setCarryFlag(count < -128 || count > 127);
 				setZeroFlag(result);
 				setOverflowFlag(count < -128 || count > 127); //almost certainly wrong
 				setNegativeFlag(result);
-				pc--;
+				state.pc--;
 				writeZeroPage(result);
 			} break;
 			
 			case 0x75: {
 				byte b      = readZeroPageX();
-				byte result = (byte) (a + b + (getCarryFlag() ? 1 : 0));
-				int  count  = a + b + (getCarryFlag() ? 1 : 0);
+				byte result = (byte) (state.a + b + (getCarryFlag() ? 1 : 0));
+				int  count  = state.a + b + (getCarryFlag() ? 1 : 0);
 				
 				setCarryFlag(count < -128 || count > 127);
 				setZeroFlag(result);
 				setOverflowFlag(count < -128 || count > 127); //almost certainly wrong
 				setNegativeFlag(result);
-				pc--;
+				state.pc--;
 				writeZeroPageX(result);
 			} break;
 			
 			case 0x6D: {
 				byte b      = readAbsolute();
-				byte result = (byte) (a + b + (getCarryFlag() ? 1 : 0));
-				int  count  = a + b + (getCarryFlag() ? 1 : 0);
+				byte result = (byte) (state.a + b + (getCarryFlag() ? 1 : 0));
+				int  count  = state.a + b + (getCarryFlag() ? 1 : 0);
 				
 				setCarryFlag(count < -128 || count > 127);
 				setZeroFlag(result);
 				setOverflowFlag(count < -128 || count > 127); //almost certainly wrong
 				setNegativeFlag(result);
-				pc--; pc--;
+				state.pc--; state.pc--;
 				writeAbsolute(result);
 			} break;
 			
 			case 0x7D: {
 				byte b      = readAbsoluteX();
-				byte result = (byte) (a + b + (getCarryFlag() ? 1 : 0));
-				int  count  = a + b + (getCarryFlag() ? 1 : 0);
+				byte result = (byte) (state.a + b + (getCarryFlag() ? 1 : 0));
+				int  count  = state.a + b + (getCarryFlag() ? 1 : 0);
 				
 				setCarryFlag(count < -128 || count > 127);
 				setZeroFlag(result);
 				setOverflowFlag(count < -128 || count > 127); //almost certainly wrong
 				setNegativeFlag(result);
-				pc--; pc--;
+				state.pc--; state.pc--;
 				writeAbsoluteX(result);
 			} break;
 			
 			case 0x79: {
 				byte b      = readAbsoluteY();
-				byte result = (byte) (a + b + (getCarryFlag() ? 1 : 0));
-				int  count  = a + b + (getCarryFlag() ? 1 : 0);
+				byte result = (byte) (state.a + b + (getCarryFlag() ? 1 : 0));
+				int  count  = state.a + b + (getCarryFlag() ? 1 : 0);
 				
 				setCarryFlag(count < -128 || count > 127);
 				setZeroFlag(result);
 				setOverflowFlag(count < -128 || count > 127); //almost certainly wrong
 				setNegativeFlag(result);
-				pc--; pc--;
+				state.pc--; state.pc--;
 				writeAbsoluteY(result);
 			} break;
 			
 			case 0x61: {
 				byte b      = readIndexedIndirect();
-				byte result = (byte) (a + b + (getCarryFlag() ? 1 : 0));
-				int  count  = a + b + (getCarryFlag() ? 1 : 0);
+				byte result = (byte) (state.a + b + (getCarryFlag() ? 1 : 0));
+				int  count  = state.a + b + (getCarryFlag() ? 1 : 0);
 				
 				setCarryFlag(count < -128 || count > 127);
 				setZeroFlag(result);
 				setOverflowFlag(count < -128 || count > 127); //almost certainly wrong
 				setNegativeFlag(result);
-				pc--; pc--;
+				state.pc--; state.pc--;
 				writeIndexedIndirect(result);
 			} break;
 			
 			case 0x71: {
 				byte b      = readIndexedIndirect();
-				byte result = (byte) (a + b + (getCarryFlag() ? 1 : 0));
-				int  count  = a + b + (getCarryFlag() ? 1 : 0);
+				byte result = (byte) (state.a + b + (getCarryFlag() ? 1 : 0));
+				int  count  = state.a + b + (getCarryFlag() ? 1 : 0);
 				
 				setCarryFlag(count < -128 || count > 127);
 				setZeroFlag(result);
 				setOverflowFlag(count < -128 || count > 127); //almost certainly wrong
 				setNegativeFlag(result);
-				pc--; pc--;
+				state.pc--; state.pc--;
 				writeIndirectIndexed(result);
 			} break;
 			
 			// AND - Logical AND
 			case 0x29: {
-				a = (byte) (a & readImmediate());
-				setZeroFlag(a);
-				setNegativeFlag(a);
+				state.a = (byte) (state.a & readImmediate());
+				setZeroFlag(state.a);
+				setNegativeFlag(state.a);
 			} break;
 			
 			case 0x25: {
-				a = (byte) (a & readImmediate());
-				setZeroFlag(a);
-				setNegativeFlag(a);
+				state.a = (byte) (state.a & readImmediate());
+				setZeroFlag(state.a);
+				setNegativeFlag(state.a);
 			} break;
 			
 			case 0x35: {
-				a = (byte) (a & readZeroPage());
-				setZeroFlag(a);
-				setNegativeFlag(a);
+				state.a = (byte) (state.a & readZeroPage());
+				setZeroFlag(state.a);
+				setNegativeFlag(state.a);
 			} break;
 			
 			case 0x2D: {
-				a = (byte) (a & readZeroPageX());
-				setZeroFlag(a);
-				setNegativeFlag(a);
+				state.a = (byte) (state.a & readZeroPageX());
+				setZeroFlag(state.a);
+				setNegativeFlag(state.a);
 			} break;
 			
 			case 0x3D: {
-				a = (byte) (a & readAbsoluteX());
-				setZeroFlag(a);
-				setNegativeFlag(a);
+				state.a = (byte) (state.a & readAbsoluteX());
+				setZeroFlag(state.a);
+				setNegativeFlag(state.a);
 			} break;
 			
 			case 0x39: {
-				a = (byte) (a & readAbsoluteY());
-				setZeroFlag(a);
-				setNegativeFlag(a);
+				state.a = (byte) (state.a & readAbsoluteY());
+				setZeroFlag(state.a);
+				setNegativeFlag(state.a);
 			} break;
 			
 			case 0x21: {
-				a = (byte) (a & readIndexedIndirect());
-				setZeroFlag(a);
-				setNegativeFlag(a);
+				state.a = (byte) (state.a & readIndexedIndirect());
+				setZeroFlag(state.a);
+				setNegativeFlag(state.a);
 			} break;
 			
 			case 0x31: {
-				a = (byte) (a & readIndirectIndexed());
-				setZeroFlag(a);
-				setNegativeFlag(a);
+				state.a = (byte) (state.a & readIndirectIndexed());
+				setZeroFlag(state.a);
+				setNegativeFlag(state.a);
 			} break;
 
 			// ASL - Arithmetic Shift Left
 			case 0x0A: {
-				byte temp = a;
+				byte temp = state.a;
 				setCarryFlag(BitTools.getBit(temp, 7));
 				temp = (byte) (temp << 1);
 				setZeroFlag(temp);
 				setNegativeFlag(temp);
-				a = temp;
+				state.a = temp;
 			} break;
 			
 			case 0x06: {
@@ -575,7 +650,7 @@ public class RicohCPU implements Runnable {
 				temp = (byte) (temp << 1);
 				setZeroFlag(temp);
 				setNegativeFlag(temp);
-				pc--;
+				state.pc--;
 				writeZeroPage(temp);
 			} break;
 			
@@ -585,7 +660,7 @@ public class RicohCPU implements Runnable {
 				temp = (byte) (temp << 1);
 				setZeroFlag(temp);
 				setNegativeFlag(temp);
-				pc--;
+				state.pc--;
 				writeZeroPageX(temp);
 			} break;
 			
@@ -595,7 +670,7 @@ public class RicohCPU implements Runnable {
 				temp = (byte) (temp << 1);
 				setZeroFlag(temp);
 				setNegativeFlag(temp);
-				pc--; pc--;
+				state.pc--; state.pc--;
 				writeAbsolute(temp);
 			} break;
 			
@@ -605,7 +680,7 @@ public class RicohCPU implements Runnable {
 				temp = (byte) (temp << 1);
 				setZeroFlag(temp);
 				setNegativeFlag(temp);
-				pc--; pc--;
+				state.pc--; state.pc--;
 				writeAbsoluteX(temp);
 			} break;
 			
@@ -613,9 +688,9 @@ public class RicohCPU implements Runnable {
 			case 0x90: {
 				if(!getCarryFlag()) {
 					System.out.println("    [CPU] Branched");
-					pc += readImmediate() + 1;
+					state.pc += readImmediate() + 1;
 				} else {
-					pc++;
+					state.pc++;
 				}
 			} break;
 			
@@ -623,9 +698,9 @@ public class RicohCPU implements Runnable {
 			case 0xB0: {
 				if(getCarryFlag()) {
 					System.out.println("    [CPU] Branched");
-					pc += readImmediate() + 1;
+					state.pc += readImmediate() + 1;
 				} else {
-					pc++;
+					state.pc++;
 				}
 			} break;
 			
@@ -633,22 +708,22 @@ public class RicohCPU implements Runnable {
 			case 0xF0: {
 				if(getZeroFlag()) {
 					System.out.println("    [CPU] Branched");
-					pc += readImmediate() + 1;
+					state.pc += readImmediate() + 1;
 				} else {
-					pc++;
+					state.pc++;
 				}
 			} break;
 			
 			// BIT - Bit Test
 			case 0x24: {
-				byte temp = (byte) (a & readZeroPage());
+				byte temp = (byte) (state.a & readZeroPage());
 				setZeroFlag(temp);
 				setOverflowFlag(BitTools.getBit(temp, 6));
 				setNegativeFlag(temp);
 			} break;
 			
 			case 0x2C: {
-				byte temp = (byte) (a & readAbsolute());
+				byte temp = (byte) (state.a & readAbsolute());
 				setZeroFlag(temp);
 				setOverflowFlag(BitTools.getBit(temp, 6));
 				setNegativeFlag(temp);
@@ -658,9 +733,9 @@ public class RicohCPU implements Runnable {
 			case 0x30: {
 				if(getNegativeFlag()) {
 					System.out.println("    [CPU] Branched");
-					pc += readImmediate() + 1;
+					state.pc += readImmediate() + 1;
 				} else {
-					pc++;
+					state.pc++;
 				}
 			} break;
 			
@@ -668,9 +743,9 @@ public class RicohCPU implements Runnable {
 			case 0xD0: {
 				if(!getZeroFlag()) {
 					System.out.println("    [CPU] Branched");
-					pc += readImmediate() + 1;
+					state.pc += readImmediate() + 1;
 				} else {
-					pc++;
+					state.pc++;
 				}
 			} break;
 			
@@ -678,18 +753,18 @@ public class RicohCPU implements Runnable {
 			case 0x10: {
 				if(!getNegativeFlag()) {
 					System.out.println("    [CPU] Branched");
-					pc += readImmediate() + 1;
+					state.pc += readImmediate() + 1;
 				} else {
-					pc++;
+					state.pc++;
 				}
 			} break;
 			
 			// BRK - Force Interrupt
 			case 0x00: {
-				pushStack((byte) (pc & 0x00FF));
-				pushStack((byte) ((pc & 0xFF00) >> 8));
-				pushStack(s);
-				pc = (short) (readMemoryMap((short) 0xFFFE) | (readMemoryMap((short) 0xFFFF) << 8));
+				pushStack((byte) (state.pc & 0x00FF));
+				pushStack((byte) ((state.pc & 0xFF00) >> 8));
+				pushStack(state.s);
+				state.pc = (short) (readMemoryMap((short) 0xFFFE) | (readMemoryMap((short) 0xFFFF) << 8));
 				System.out.println("!!! [CPU] Force Interupt");
 				setBreakFlag(true);
 			} break;
@@ -698,9 +773,9 @@ public class RicohCPU implements Runnable {
 			case 0x50: {
 				if(!getOverflowFlag()) {
 					System.out.println("    [CPU] Branched");
-					pc += readImmediate() + 1;
+					state.pc += readImmediate() + 1;
 				} else {
-					pc++;
+					state.pc++;
 				}
 			} break;
 			
@@ -708,9 +783,9 @@ public class RicohCPU implements Runnable {
 			case 0x70: {
 				if(getOverflowFlag()) {
 					System.out.println("    [CPU] Branched");
-					pc += readImmediate() + 1;
+					state.pc += readImmediate() + 1;
 				} else {
-					pc++;
+					state.pc++;
 				}
 			} break;
 			
@@ -737,108 +812,108 @@ public class RicohCPU implements Runnable {
 			// CMP - Compare
 			case 0xC9: {
 				byte value = readImmediate();
-				setCarryFlag(a >= value);
-				setZeroFlag(a == value);
-				setNegativeFlag((byte) (a - value));
+				setCarryFlag(state.a >= value);
+				setZeroFlag(state.a == value);
+				setNegativeFlag((byte) (state.a - value));
 			} break;
 			
 			case 0xC5: {
 				byte value = readZeroPage();
-				setCarryFlag(a >= value);
-				setZeroFlag(a == value);
-				setNegativeFlag((byte) (a - value));
+				setCarryFlag(state.a >= value);
+				setZeroFlag(state.a == value);
+				setNegativeFlag((byte) (state.a - value));
 			} break;
 			
 			case 0xD5: {
 				byte value = readZeroPageX();
-				setCarryFlag(a >= value);
-				setZeroFlag(a == value);
-				setNegativeFlag((byte) (a - value));
+				setCarryFlag(state.a >= value);
+				setZeroFlag(state.a == value);
+				setNegativeFlag((byte) (state.a - value));
 			} break;
 			
 			case 0xCD: {
 				byte value = readAbsolute();
-				setCarryFlag(a >= value);
-				setZeroFlag(a == value);
-				setNegativeFlag((byte) (a - value));
+				setCarryFlag(state.a >= value);
+				setZeroFlag(state.a == value);
+				setNegativeFlag((byte) (state.a - value));
 			} break;
 			
 			case 0xDD: {
 				byte value = readAbsoluteX();
-				setCarryFlag(a >= value);
-				setZeroFlag(a == value);
-				setNegativeFlag((byte) (a - value));
+				setCarryFlag(state.a >= value);
+				setZeroFlag(state.a == value);
+				setNegativeFlag((byte) (state.a - value));
 			} break;
 			
 			case 0xD9: {
 				byte value = readAbsoluteY();
-				setCarryFlag(a >= value);
-				setZeroFlag(a == value);
-				setNegativeFlag((byte) (a - value));
+				setCarryFlag(state.a >= value);
+				setZeroFlag(state.a == value);
+				setNegativeFlag((byte) (state.a - value));
 			} break;
 			
 			case 0xC1: {
 				byte value = readIndexedIndirect();
-				setCarryFlag(a >= value);
-				setZeroFlag(a == value);
-				setNegativeFlag((byte) (a - value));
+				setCarryFlag(state.a >= value);
+				setZeroFlag(state.a == value);
+				setNegativeFlag((byte) (state.a - value));
 			} break;
 			
 			case 0xD1: {
 				byte value = readIndirectIndexed();
-				setCarryFlag(a >= value);
-				setZeroFlag(a == value);
-				setNegativeFlag((byte) (a - value));
+				setCarryFlag(state.a >= value);
+				setZeroFlag(state.a == value);
+				setNegativeFlag((byte) (state.a - value));
 			} break;
 				
 			// CPX - Compare X Register
 			case 0xE0: {
 				byte value = readImmediate();
-				setCarryFlag(x >= value);
-				setZeroFlag(x == value);
-				setNegativeFlag((byte) (x - value));
+				setCarryFlag(state.x >= value);
+				setZeroFlag(state.x == value);
+				setNegativeFlag((byte) (state.x - value));
 			} break;
 			
 			case 0xE4: {
 				byte value = readZeroPage();
-				setCarryFlag(x >= value);
-				setZeroFlag(x == value);
-				setNegativeFlag((byte) (x - value));
+				setCarryFlag(state.x >= value);
+				setZeroFlag(state.x == value);
+				setNegativeFlag((byte) (state.x - value));
 			} break;
 			
 			case 0xEC: {
 				byte value = readAbsolute();
-				setCarryFlag(x >= value);
-				setZeroFlag(x == value);
-				setNegativeFlag((byte) (x - value));
+				setCarryFlag(state.x >= value);
+				setZeroFlag(state.x == value);
+				setNegativeFlag((byte) (state.x - value));
 			} break;
 				
 			// CPY - Compare Y Register
 			case 0xC0: {
 				byte value = readImmediate();
-				setCarryFlag(y >= value);
-				setZeroFlag(y == value);
-				setNegativeFlag((byte) (y - value));
+				setCarryFlag(state.y >= value);
+				setZeroFlag(state.y == value);
+				setNegativeFlag((byte) (state.y - value));
 			} break;
 			
 			case 0xC4: {
 				byte value = readZeroPage();
-				setCarryFlag(y >= value);
-				setZeroFlag(y == value);
-				setNegativeFlag((byte) (y - value));
+				setCarryFlag(state.y >= value);
+				setZeroFlag(state.y == value);
+				setNegativeFlag((byte) (state.y - value));
 			} break;
 			
 			case 0xCC: {
 				byte value = readAbsolute();
-				setCarryFlag(y >= value);
-				setZeroFlag(y == value);
-				setNegativeFlag((byte) (y - value));
+				setCarryFlag(state.y >= value);
+				setZeroFlag(state.y == value);
+				setNegativeFlag((byte) (state.y - value));
 			} break;
 				
 			// DEC - Decrement Memory
 			case 0xc6: {
 				byte result = (byte) (readZeroPage() - 1);
-				pc--;
+				state.pc--;
 				writeZeroPage(result);
 				setZeroFlag(result);
 				setNegativeFlag(result);
@@ -846,7 +921,7 @@ public class RicohCPU implements Runnable {
 			
 			case 0xD6: {
 				byte result = (byte) (readZeroPageX() - 1);
-				pc--;
+				state.pc--;
 				writeZeroPageX(result);
 				setZeroFlag(result);
 				setNegativeFlag(result);
@@ -854,7 +929,7 @@ public class RicohCPU implements Runnable {
 			
 			case 0xCE: {
 				byte result = (byte) (readAbsolute() - 1);
-				pc--; pc--;
+				state.pc--; state.pc--;
 				writeAbsolute(result);
 				setZeroFlag(result);
 				setNegativeFlag(result);
@@ -862,7 +937,7 @@ public class RicohCPU implements Runnable {
 			
 			case 0xDE: {
 				byte result = (byte) (readAbsoluteX() - 1);
-				pc--; pc--;
+				state.pc--; state.pc--;
 				writeAbsoluteX(result);
 				setZeroFlag(result);
 				setNegativeFlag(result);
@@ -870,71 +945,71 @@ public class RicohCPU implements Runnable {
 				
 			// DEX - Decrement X Register
 			case 0xCA: {
-				x = (byte) ((x & 0xFF) - 1);
-				setZeroFlag(x);
-				setNegativeFlag(x);
+				state.x = (byte) ((state.x & 0xFF) - 1);
+				setZeroFlag(state.x);
+				setNegativeFlag(state.x);
 			} break;
 				
 			// DEY - Decrement Y Register
 			case 0x88: {
-				y = (byte) ((y & 0xFF) - 1);
-				setZeroFlag(y);
-				setNegativeFlag(y);
+				state.y = (byte) ((state.y & 0xFF) - 1);
+				setZeroFlag(state.y);
+				setNegativeFlag(state.y);
 			} break;
 				
 			// EOR - Exclusive OR
 			case 0x49: {
-				a = (byte) (a ^ readImmediate());
-				setZeroFlag(a);
-				setNegativeFlag(a);
+				state.a = (byte) (state.a ^ readImmediate());
+				setZeroFlag(state.a);
+				setNegativeFlag(state.a);
 			} break;
 			
 			case 0x45: {
-				a = (byte) (a ^ readZeroPage());
-				setZeroFlag(a);
-				setNegativeFlag(a);
+				state.a = (byte) (state.a ^ readZeroPage());
+				setZeroFlag(state.a);
+				setNegativeFlag(state.a);
 			} break;
 			
 			case 0x55: {
-				a = (byte) (a ^ readZeroPageX());
-				setZeroFlag(a);
-				setNegativeFlag(a);
+				state.a = (byte) (state.a ^ readZeroPageX());
+				setZeroFlag(state.a);
+				setNegativeFlag(state.a);
 			} break;
 			
 			case 0x4D: {
-				a = (byte) (a ^ readAbsolute());
-				setZeroFlag(a);
-				setNegativeFlag(a);
+				state.a = (byte) (state.a ^ readAbsolute());
+				setZeroFlag(state.a);
+				setNegativeFlag(state.a);
 			} break;
 			
 			case 0x5D: {
-				a = (byte) (a ^ readAbsoluteX());
-				setZeroFlag(a);
-				setNegativeFlag(a);
+				state.a = (byte) (state.a ^ readAbsoluteX());
+				setZeroFlag(state.a);
+				setNegativeFlag(state.a);
 			} break;
 			
 			case 0x59: {
-				a = (byte) (a ^ readAbsoluteY());
-				setZeroFlag(a);
-				setNegativeFlag(a);
+				state.a = (byte) (state.a ^ readAbsoluteY());
+				setZeroFlag(state.a);
+				setNegativeFlag(state.a);
 			} break;
 			
 			case 0x41: {
-				a = (byte) (a ^ readIndexedIndirect());
-				setZeroFlag(a);
-				setNegativeFlag(a);
+				state.a = (byte) (state.a ^ readIndexedIndirect());
+				setZeroFlag(state.a);
+				setNegativeFlag(state.a);
 			} break;
 			
 			case 0x51: {
-				a = (byte) (a ^ readIndirectIndexed());
-				setZeroFlag(a);
-				setNegativeFlag(a);
+				state.a = (byte) (state.a ^ readIndirectIndexed());
+				setZeroFlag(state.a);
+				setNegativeFlag(state.a);
 			} break;
 				
 			// INC - Increment Memory
 			case 0xE6: {
 				byte result = (byte) (readZeroPage() + 1);
-				pc--;
+				state.pc--;
 				writeZeroPage(result);
 				setZeroFlag(result);
 				setNegativeFlag(result);
@@ -942,7 +1017,7 @@ public class RicohCPU implements Runnable {
 			
 			case 0xF6: {
 				byte result = (byte) (readZeroPageX() + 1);
-				pc--;
+				state.pc--;
 				writeZeroPageX(result);
 				setZeroFlag(result);
 				setNegativeFlag(result);
@@ -950,7 +1025,7 @@ public class RicohCPU implements Runnable {
 			
 			case 0xEE: {
 				byte result = (byte) (readAbsolute() + 1);
-				pc--; pc--;
+				state.pc--; state.pc--;
 				writeAbsolute(result);
 				setZeroFlag(result);
 				setNegativeFlag(result);
@@ -958,7 +1033,7 @@ public class RicohCPU implements Runnable {
 			
 			case 0xFE: {
 				byte result = (byte) (readAbsoluteX() + 1);
-				pc--; pc--;
+				state.pc--; state.pc--;
 				writeAbsoluteX(result);
 				setZeroFlag(result);
 				setNegativeFlag(result);
@@ -966,161 +1041,161 @@ public class RicohCPU implements Runnable {
 				
 			// INX - Increment X Register
 			case 0xE8: {
-				x++;
-				setZeroFlag(x);
-				setNegativeFlag(x);
+				state.x++;
+				setZeroFlag(state.x);
+				setNegativeFlag(state.x);
 			} break;
 				
 			// INY - Increment Y Register
 			case 0xC8: {
-				y++;
-				setZeroFlag(y);
-				setNegativeFlag(y);
+				state.y++;
+				setZeroFlag(state.y);
+				setNegativeFlag(state.y);
 			} break;
 				
 			// JMP - Jump
 			case 0x4C: {
-				String from = String.format("%X (%X)", pc&0xFFFF, ((pc & 0xFFFF) - 0x8000) % (game.prg.length - 16));
-				pc = (short) (((readImmediate() & 0xFF) | ((readImmediate() & 0xFF) << 8) & 0xFFFF) - 1);
+				//String from = String.format("%X (%X)", state.pc&0xFFFF, ((state.pc & 0xFFFF) - 0x8000) % (state.game.prg.length - 16));
+				state.pc = (short) (((readImmediate() & 0xFF) | ((readImmediate() & 0xFF) << 8) & 0xFFFF) - 1);
 				//System.out.format("    [CPU] JMP 4C %X (%X) from %s%n", pc&0xFFFF, ((pc & 0xFFFF) - 0x8000) % (game.prg.length - 16), from);
 			} break;
 			
 			case 0x6C: {
-				String from = String.format("%X (%X)", pc&0xFFFF, ((pc & 0xFFFF) - 0x8000) % (game.prg.length - 16));
-				pc = (short) (((readImmediate() & 0xFF) | ((readImmediate() & 0xFF) << 8) & 0xFFFF) - 1);
-				pc = (short) (((readImmediate() & 0xFF) | ((readImmediate() & 0xFF) << 8) & 0xFFFF) - 1);
+				//String from = String.format("%X (%X)", state.pc&0xFFFF, ((state.pc & 0xFFFF) - 0x8000) % (state.game.prg.length - 16));
+				state.pc = (short) (((readImmediate() & 0xFF) | ((readImmediate() & 0xFF) << 8) & 0xFFFF) - 1);
+				state.pc = (short) (((readImmediate() & 0xFF) | ((readImmediate() & 0xFF) << 8) & 0xFFFF) - 1);
 				//System.out.format("    [CPU] JMP 6C %X (%X) from %s%n", pc&0xFFFF, ((pc & 0xFFFF) - 0x8000) % (game.prg.length - 16), from);
 			} break;
 			
 			// JSR - Jump to Subroutine
 			case 0x20: {
-				String from = String.format("%X (%X)", pc&0xFFFF, ((pc & 0xFFFF) - 0x8000) % (game.prg.length - 16));
+				//String from = String.format("%X (%X)", state.pc&0xFFFF, ((state.pc & 0xFFFF) - 0x8000) % (state.game.prg.length - 16));
 				short destination = (short) (((readImmediate() & 0xFF) | ((readImmediate() & 0xFF) << 8) & 0xFFFF) - 1);
-				pushStack((byte) ((pc & 0x00FF)));
-				pushStack((byte) ((pc & 0xFF00) >> 8));
-				pc = destination;
+				pushStack((byte) ((state.pc & 0x00FF)));
+				pushStack((byte) ((state.pc & 0xFF00) >> 8));
+				state.pc = destination;
 				//System.out.format("    [CPU] JSR to %X (%X) from %s%n", pc&0xFFFF, ((pc & 0xFFFF) - 0x8000) % (game.prg.length - 16), from);
 			} break;
 				
 			// LDA - Load Accumulator
 			case 0xA9: {
-				a = readImmediate();
-				setZeroFlag(a);
-				setNegativeFlag(a);
+				state.a = readImmediate();
+				setZeroFlag(state.a);
+				setNegativeFlag(state.a);
 			} break;
 			
 			case 0xA5: {
-				a = readZeroPage();
-				setZeroFlag(a);
-				setNegativeFlag(a);
+				state.a = readZeroPage();
+				setZeroFlag(state.a);
+				setNegativeFlag(state.a);
 			} break;
 			
 			case 0xB5: {
-				a = readZeroPageX();
-				setZeroFlag(a);
-				setNegativeFlag(a);
+				state.a = readZeroPageX();
+				setZeroFlag(state.a);
+				setNegativeFlag(state.a);
 			} break;
 			
 			case 0xAD: {
-				a = readAbsolute();
-				setZeroFlag(a);
-				setNegativeFlag(a);
+				state.a = readAbsolute();
+				setZeroFlag(state.a);
+				setNegativeFlag(state.a);
 			} break;
 			
 			case 0xBD: {
-				a = readAbsoluteX();
-				setZeroFlag(a);
-				setNegativeFlag(a);
+				state.a = readAbsoluteX();
+				setZeroFlag(state.a);
+				setNegativeFlag(state.a);
 			} break;
 			
 			case 0xB9: {
-				a = readAbsoluteY();
-				setZeroFlag(a);
-				setNegativeFlag(a);
+				state.a = readAbsoluteY();
+				setZeroFlag(state.a);
+				setNegativeFlag(state.a);
 			} break;
 			
 			case 0xA1: {
-				a = readIndexedIndirect();
-				setZeroFlag(a);
-				setNegativeFlag(a);
+				state.a = readIndexedIndirect();
+				setZeroFlag(state.a);
+				setNegativeFlag(state.a);
 			} break;
 			
 			case 0xB1: {
-				a = readIndirectIndexed();
-				setZeroFlag(a);
-				setNegativeFlag(a);
+				state.a = readIndirectIndexed();
+				setZeroFlag(state.a);
+				setNegativeFlag(state.a);
 			} break;
 				
 			// LDX - Load X Register
 			case 0xA2: {
-				x = readImmediate();
-				setZeroFlag(x);
-				setNegativeFlag(x);
+				state.x = readImmediate();
+				setZeroFlag(state.x);
+				setNegativeFlag(state.x);
 			} break;
 			
 			case 0xA6: {
-				x = readZeroPage();
-				setZeroFlag(x);
-				setNegativeFlag(x);
+				state.x = readZeroPage();
+				setZeroFlag(state.x);
+				setNegativeFlag(state.x);
 			} break;
 			
 			case 0xB6: {
-				x = readZeroPageY();
-				setZeroFlag(x);
-				setNegativeFlag(x);
+				state.x = readZeroPageY();
+				setZeroFlag(state.x);
+				setNegativeFlag(state.x);
 			} break;
 			
 			case 0xAE: {
-				x = readAbsolute();
-				setZeroFlag(x);
-				setNegativeFlag(x);
+				state.x = readAbsolute();
+				setZeroFlag(state.x);
+				setNegativeFlag(state.x);
 			} break;
 			
 			case 0xBE: {
-				x = readAbsoluteY();
-				setZeroFlag(x);
-				setNegativeFlag(x);
+				state.x = readAbsoluteY();
+				setZeroFlag(state.x);
+				setNegativeFlag(state.x);
 			} break;
 				
 			// LDY - Load Y Register
 			case 0xA0: {
-				y = readImmediate();
-				setZeroFlag(y);
-				setNegativeFlag(y);
+				state.y = readImmediate();
+				setZeroFlag(state.y);
+				setNegativeFlag(state.y);
 			} break;
 			
 			case 0xA4: {
-				y = readZeroPage();
-				setZeroFlag(y);
-				setNegativeFlag(y);
+				state.y = readZeroPage();
+				setZeroFlag(state.y);
+				setNegativeFlag(state.y);
 			} break;
 			
 			case 0xB4: {
-				y = readZeroPageX();
-				setZeroFlag(y);
-				setNegativeFlag(y);
+				state.y = readZeroPageX();
+				setZeroFlag(state.y);
+				setNegativeFlag(state.y);
 			} break;
 			
 			case 0xAC: {
-				y = readAbsolute();
-				setZeroFlag(y);
-				setNegativeFlag(y);
+				state.y = readAbsolute();
+				setZeroFlag(state.y);
+				setNegativeFlag(state.y);
 			} break;
 			
 			case 0xBC: {
-				y = readAbsoluteX();
-				setZeroFlag(y);
-				setNegativeFlag(y);
+				state.y = readAbsoluteX();
+				setZeroFlag(state.y);
+				setNegativeFlag(state.y);
 			} break;
 				
 			// LSR - Logical Shift Right
 			case 0x4A: {
-				byte temp = a;
+				byte temp = state.a;
 				setCarryFlag(BitTools.getBit(temp, 0));
 				temp = (byte) (temp >> 1);
 				setZeroFlag(temp);
 				setNegativeFlag(temp);
-				a = temp;
+				state.a = temp;
 			} break;
 			
 			case 0x46: {
@@ -1129,7 +1204,7 @@ public class RicohCPU implements Runnable {
 				temp = (byte) (temp >> 1);
 				setZeroFlag(temp);
 				setNegativeFlag(temp);
-				pc--;
+				state.pc--;
 				writeZeroPage(temp);
 			} break;
 			
@@ -1139,7 +1214,7 @@ public class RicohCPU implements Runnable {
 				temp = (byte) (temp >> 1);
 				setZeroFlag(temp);
 				setNegativeFlag(temp);
-				pc--;
+				state.pc--;
 				writeZeroPageX(temp);
 			} break;
 			
@@ -1149,7 +1224,7 @@ public class RicohCPU implements Runnable {
 				temp = (byte) (temp >> 1);
 				setZeroFlag(temp);
 				setNegativeFlag(temp);
-				pc--; pc--;
+				state.pc--; state.pc--;
 				writeAbsolute(temp);
 			} break;
 			
@@ -1159,7 +1234,7 @@ public class RicohCPU implements Runnable {
 				temp = (byte) (temp >> 1);
 				setZeroFlag(temp);
 				setNegativeFlag(temp);
-				pc--; pc--;
+				state.pc--; state.pc--;
 				writeAbsoluteX(temp);
 			} break;
 				
@@ -1169,283 +1244,283 @@ public class RicohCPU implements Runnable {
 				
 			// ORA - Logical Inclusive OR
 			case 0x09: {
-				a = (byte) (a | readImmediate());
-				setZeroFlag(a);
-				setNegativeFlag(a);
+				state.a = (byte) (state.a | readImmediate());
+				setZeroFlag(state.a);
+				setNegativeFlag(state.a);
 			} break;
 
 			case 0x05: {
-				a = (byte) (a | readZeroPage());
-				setZeroFlag(a);
-				setNegativeFlag(a);
+				state.a = (byte) (state.a | readZeroPage());
+				setZeroFlag(state.a);
+				setNegativeFlag(state.a);
 			} break;
 
 			case 0x15: {
-				a = (byte) (a | readZeroPageX());
-				setZeroFlag(a);
-				setNegativeFlag(a);
+				state.a = (byte) (state.a | readZeroPageX());
+				setZeroFlag(state.a);
+				setNegativeFlag(state.a);
 			} break;
 
 			case 0x0D: {
-				a = (byte) (a | readAbsolute());
-				setZeroFlag(a);
-				setNegativeFlag(a);
+				state.a = (byte) (state.a | readAbsolute());
+				setZeroFlag(state.a);
+				setNegativeFlag(state.a);
 			} break;
 
 			case 0x1D: {
-				a = (byte) (a | readAbsoluteX());
-				setZeroFlag(a);
-				setNegativeFlag(a);
+				state.a = (byte) (state.a | readAbsoluteX());
+				setZeroFlag(state.a);
+				setNegativeFlag(state.a);
 			} break;
 
 			case 0x19: {
-				a = (byte) (a | readAbsoluteY());
-				setZeroFlag(a);
-				setNegativeFlag(a);
+				state.a = (byte) (state.a | readAbsoluteY());
+				setZeroFlag(state.a);
+				setNegativeFlag(state.a);
 			} break;
 			
 			case 0x01: {
-				a = (byte) (a | readIndexedIndirect());
-				setZeroFlag(a);
-				setNegativeFlag(a);
+				state.a = (byte) (state.a | readIndexedIndirect());
+				setZeroFlag(state.a);
+				setNegativeFlag(state.a);
 			} break;
 			
 			case 0x11: {
-				a = (byte) (a | readIndirectIndexed());
-				setZeroFlag(a);
-				setNegativeFlag(a);
+				state.a = (byte) (state.a | readIndirectIndexed());
+				setZeroFlag(state.a);
+				setNegativeFlag(state.a);
 			} break;
 				
 			// PHA - Push Accumulator
 			case 0x48: {
-				pushStack(a);
+				pushStack(state.a);
 			} break;
 				
 			// PHP - Push Processor Status
 			case 0x08: {
-				pushStack(s);
+				pushStack(state.s);
 			} break;
 				
 			// PLA - Pull Accumulator
 			case 0x68: {
-				a = pullStack();
-				setZeroFlag(a);
-				setNegativeFlag(a);
+				state.a = pullStack();
+				setZeroFlag(state.a);
+				setNegativeFlag(state.a);
 			} break;
 				
 			// PLP - Pull Processor Status
 			case 0x28: {
-				s = pullStack();
+				state.s = pullStack();
 			} break;
 				
 			// ROL - Rotate Left
 			case 0x2A: {
-				byte old = a;
-				a = (byte) ((getCarryFlag() ? 1 : 0) | (old << 1));
+				byte old = state.a;
+				state.a = (byte) ((getCarryFlag() ? 1 : 0) | (old << 1));
 				setCarryFlag(BitTools.getBit(old, 7));
-				setZeroFlag(a);
-				setNegativeFlag(a);
+				setZeroFlag(state.a);
+				setNegativeFlag(state.a);
 			} break;
 				
 			case 0x26: {
 				byte old = readZeroPage();
-				pc--;
+				state.pc--;
 				writeZeroPage((byte) ((getCarryFlag() ? 1 : 0) | (old << 1)));
 				setCarryFlag(BitTools.getBit(old, 7));
-				setZeroFlag(a);
-				setNegativeFlag(a);
+				setZeroFlag(state.a);
+				setNegativeFlag(state.a);
 			} break;
 			
 			case 0x36: {
 				byte old = readZeroPageX();
-				pc--;
+				state.pc--;
 				writeZeroPageX((byte) ((getCarryFlag() ? 1 : 0) | (old << 1)));
 				setCarryFlag(BitTools.getBit(old, 7));
-				setZeroFlag(a);
-				setNegativeFlag(a);
+				setZeroFlag(state.a);
+				setNegativeFlag(state.a);
 			} break;
 			
     		case 0x2E: {
     			byte old = readAbsolute();
-    			pc--; pc--;
+    			state.pc--; state.pc--;
     			writeAbsolute((byte) ((getCarryFlag() ? 1 : 0) | (old << 1)));
     			setCarryFlag(BitTools.getBit(old, 7));
-				setZeroFlag(a);
-				setNegativeFlag(a);
+				setZeroFlag(state.a);
+				setNegativeFlag(state.a);
     		} break;
     		
         	case 0x3E: {
         		byte old = readAbsoluteX();
-				pc--; pc--;
+        		state.pc--; state.pc--;
         		writeAbsoluteX((byte) ((getCarryFlag() ? 1 : 0) | (old << 1)));
         		setCarryFlag(BitTools.getBit(old, 7));
-				setZeroFlag(a);
-				setNegativeFlag(a);
+				setZeroFlag(state.a);
+				setNegativeFlag(state.a);
         	} break;
 				
 			// ROR - Rotate Right
 			case 0x6A: {
-				byte old = a;
-				a = (byte) (((getCarryFlag() ? 1 : 0) << 7) | (old >> 1));
+				byte old = state.a;
+				state.a = (byte) (((getCarryFlag() ? 1 : 0) << 7) | (old >> 1));
 				setCarryFlag(BitTools.getBit(old, 0));
-				setZeroFlag(a);
-				setNegativeFlag(a);
+				setZeroFlag(state.a);
+				setNegativeFlag(state.a);
 			} break;
 				
 			case 0x66: {
 				byte old = readZeroPage();
-				a = (byte) (((getCarryFlag() ? 1 : 0) << 7) | (old >> 1));
-				pc--;
+				state.a = (byte) (((getCarryFlag() ? 1 : 0) << 7) | (old >> 1));
+				state.pc--;
 				setCarryFlag(BitTools.getBit(old, 0));
-				writeZeroPage(a);
-				setZeroFlag(a);
-				setNegativeFlag(a);
+				writeZeroPage(state.a);
+				setZeroFlag(state.a);
+				setNegativeFlag(state.a);
 			} break;
 			
 			case 0x76: {
 				byte old = readZeroPageX();
-				pc--;
-				a = (byte) (((getCarryFlag() ? 1 : 0) << 7) | (old >> 1));
+				state.pc--;
+				state.a = (byte) (((getCarryFlag() ? 1 : 0) << 7) | (old >> 1));
 				setCarryFlag(BitTools.getBit(old, 0));
-				writeZeroPageX(a);
-				setZeroFlag(a);
-				setNegativeFlag(a);
+				writeZeroPageX(state.a);
+				setZeroFlag(state.a);
+				setNegativeFlag(state.a);
 			} break;
 			
     		case 0x6E: {
     			byte old = readAbsolute();
-    			pc--; pc--;
-				a = (byte) (((getCarryFlag() ? 1 : 0) << 7) | (old >> 1));
+    			state.pc--; state.pc--;
+    			state.a = (byte) (((getCarryFlag() ? 1 : 0) << 7) | (old >> 1));
     			setCarryFlag(BitTools.getBit(old, 0));
-    			writeAbsolute(a);
-				setZeroFlag(a);
-				setNegativeFlag(a);
+    			writeAbsolute(state.a);
+				setZeroFlag(state.a);
+				setNegativeFlag(state.a);
     		} break;
     		
         	case 0x7E: {
         		byte old = readAbsoluteX();
-				pc--; pc--;
-				a = (byte) (((getCarryFlag() ? 1 : 0) << 7) | (old >> 1));
+        		state.pc--; state.pc--;
+        		state.a = (byte) (((getCarryFlag() ? 1 : 0) << 7) | (old >> 1));
         		setCarryFlag(BitTools.getBit(old, 0));
-        		writeAbsoluteX(a);
-				setZeroFlag(a);
-				setNegativeFlag(a);
+        		writeAbsoluteX(state.a);
+				setZeroFlag(state.a);
+				setNegativeFlag(state.a);
         	} break;
 				
 			// RTI - Return from Interrupt
 			case 0x40: {
-				s = pullStack();
-				pc = (short) (((pullStack() & 0xFF) << 8) | ((pullStack() & 0xFF)) & 0xFFFF);
+				state.s = pullStack();
+				state.pc = (short) (((pullStack() & 0xFF) << 8) | ((pullStack() & 0xFF)) & 0xFFFF);
 				//System.out.format("    [CPU] RTI to %X%n", pc&0xFFFF);
 			} break;
 				
 			// RTS - Return from Subroutine
 			case 0x60: {
-				pc = (short) (((pullStack() & 0xFF) << 8) | ((pullStack() & 0xFF)) & 0xFFFF);
+				state.pc = (short) (((pullStack() & 0xFF) << 8) | ((pullStack() & 0xFF)) & 0xFFFF);
 				//System.out.format("    [CPU] RTS to %X%n", pc&0xFFFF);
 			} break;
 				
 			// SBC - Subtract with Carry
 			case 0xE9: {
 				byte b      = readImmediate();
-				byte result = (byte) (a - b - (!getCarryFlag() ? 1 : 0));
-				int  count  = a - b - (getCarryFlag() ? 1 : 0);
+				byte result = (byte) (state.a - b - (!getCarryFlag() ? 1 : 0));
+				int  count  = state.a - b - (getCarryFlag() ? 1 : 0);
 				
 				setCarryFlag(count < -128 || count > 127);
 				setZeroFlag(result);
 				setOverflowFlag(count < -128 || count > 127); //almost certainly wrong
 				setNegativeFlag(result);
-				a = result;
+				state.a = result;
 			} break;
 			
 			case 0xE5: {
 				byte b      = readZeroPage();
-				byte result = (byte) (a - b - (!getCarryFlag() ? 1 : 0));
-				int  count  = a - b - (getCarryFlag() ? 1 : 0);
+				byte result = (byte) (state.a - b - (!getCarryFlag() ? 1 : 0));
+				int  count  = state.a - b - (getCarryFlag() ? 1 : 0);
 				
 				setCarryFlag(count < -128 || count > 127);
 				setZeroFlag(result);
 				setOverflowFlag(count < -128 || count > 127); //almost certainly wrong
 				setNegativeFlag(result);
-				pc--;
+				state.pc--;
 				writeZeroPage(result);
 			} break;
 			
 			case 0xF5: {
 				byte b      = readZeroPageX();
-				byte result = (byte) (a - b - (!getCarryFlag() ? 1 : 0));
-				int  count  = a - b - (getCarryFlag() ? 1 : 0);
+				byte result = (byte) (state.a - b - (!getCarryFlag() ? 1 : 0));
+				int  count  = state.a - b - (getCarryFlag() ? 1 : 0);
 				
 				setCarryFlag(count < -128 || count > 127);
 				setZeroFlag(result);
 				setOverflowFlag(count < -128 || count > 127); //almost certainly wrong
 				setNegativeFlag(result);
-				pc--;
+				state.pc--;
 				writeZeroPageX(result);
 			} break;
 			
 			case 0xED: {
 				byte b      = readAbsolute();
-				byte result = (byte) (a - b - (!getCarryFlag() ? 1 : 0));
-				int  count  = a - b - (getCarryFlag() ? 1 : 0);
+				byte result = (byte) (state.a - b - (!getCarryFlag() ? 1 : 0));
+				int  count  = state.a - b - (getCarryFlag() ? 1 : 0);
 				
 				setCarryFlag(count < -128 || count > 127);
 				setZeroFlag(result);
 				setOverflowFlag(count < -128 || count > 127); //almost certainly wrong
 				setNegativeFlag(result);
-				pc--; pc--;
+				state.pc--; state.pc--;
 				writeAbsolute(result);
 			} break;
 			
 			case 0xFD: {
 				byte b      = readAbsoluteX();
-				byte result = (byte) (a - b - (!getCarryFlag() ? 1 : 0));
-				int  count  = a - b - (getCarryFlag() ? 1 : 0);
+				byte result = (byte) (state.a - b - (!getCarryFlag() ? 1 : 0));
+				int  count  = state.a - b - (getCarryFlag() ? 1 : 0);
 				
 				setCarryFlag(count < -128 || count > 127);
 				setZeroFlag(result);
 				setOverflowFlag(count < -128 || count > 127); //almost certainly wrong
 				setNegativeFlag(result);
-				pc--; pc--;
+				state.pc--; state.pc--;
 				writeAbsoluteX(result);
 			} break;
 			
 			case 0xF9: {
 				byte b      = readAbsoluteY();
-				byte result = (byte) (a - b - (!getCarryFlag() ? 1 : 0));
-				int  count  = a - b - (getCarryFlag() ? 1 : 0);
+				byte result = (byte) (state.a - b - (!getCarryFlag() ? 1 : 0));
+				int  count  = state.a - b - (getCarryFlag() ? 1 : 0);
 				
 				setCarryFlag(count < -128 || count > 127);
 				setZeroFlag(result);
 				setOverflowFlag(count < -128 || count > 127); //almost certainly wrong
 				setNegativeFlag(result);
-				pc--; pc--;
+				state.pc--; state.pc--;
 				writeAbsoluteY(result);
 			} break;
 			
 			case 0xE1: {
 				byte b      = readIndexedIndirect();
-				byte result = (byte) (a - b - (!getCarryFlag() ? 1 : 0));
-				int  count  = a - b - (getCarryFlag() ? 1 : 0);
+				byte result = (byte) (state.a - b - (!getCarryFlag() ? 1 : 0));
+				int  count  = state.a - b - (getCarryFlag() ? 1 : 0);
 				
 				setCarryFlag(count < -128 || count > 127);
 				setZeroFlag(result);
 				setOverflowFlag(count < -128 || count > 127); //almost certainly wrong
 				setNegativeFlag(result);
-				pc--; pc--;
+				state.pc--; state.pc--;
 				writeIndexedIndirect(result);
 			} break;
 			
 			case 0xF1: {
 				byte b      = readIndirectIndexed();
-				byte result = (byte) (a - b - (!getCarryFlag() ? 1 : 0));
-				int  count  = a - b - (getCarryFlag() ? 1 : 0);
+				byte result = (byte) (state.a - b - (!getCarryFlag() ? 1 : 0));
+				int  count  = state.a - b - (getCarryFlag() ? 1 : 0);
 				
 				setCarryFlag(count < -128 || count > 127);
 				setZeroFlag(result);
 				setOverflowFlag(count < -128 || count > 127); //almost certainly wrong
 				setNegativeFlag(result);
-				pc--; pc--;
+				state.pc--; state.pc--;
 				writeIndirectIndexed(result);
 			} break;
 				
@@ -1466,102 +1541,102 @@ public class RicohCPU implements Runnable {
 			
 			// STA - write Accumulator
 			case 0x85: {
-				writeZeroPage(a);
+				writeZeroPage(state.a);
 			} break;
 				
 			case 0x95: {
-				writeZeroPageX(a);
+				writeZeroPageX(state.a);
 			} break;
 				
 			case 0x8D: {
-				writeAbsolute(a);
+				writeAbsolute(state.a);
 			} break;
 				
 			case 0x9D: {
-				writeAbsoluteX(a);
+				writeAbsoluteX(state.a);
 			} break;
 				
 			case 0x99: {
-				writeAbsoluteY(a);
+				writeAbsoluteY(state.a);
 			} break;
 			
 			case 0x81: {
-				writeIndexedIndirect(a);
+				writeIndexedIndirect(state.a);
 			} break;
 			
 			case 0x91: {
-				writeIndirectIndexed(a);
+				writeIndirectIndexed(state.a);
 			} break;
 				
 			// STX - write X Register
 			case 0x86: {
-				writeZeroPage(x);
+				writeZeroPage(state.x);
 			} break;
 				
 			case 0x96: {
-				writeZeroPageX(x);
+				writeZeroPageX(state.x);
 			} break;
 				
 			case 0x8E: {
-				writeAbsolute(x);
+				writeAbsolute(state.x);
 			} break;
 				
 			// STY - write Y Register
 			case 0x84: {
-				writeZeroPage(y);
+				writeZeroPage(state.y);
 			} break;
 				
 			case 0x94: {
-				writeZeroPageX(y);
+				writeZeroPageX(state.y);
 			} break;
 				
 			case 0x8C: {
-				writeAbsolute(y);
+				writeAbsolute(state.y);
 			} break;
 				
 			// TAX - Transfer Accumulator to X
 			case 0xAA: {
-				x = a;
-				setZeroFlag(x);
-				setNegativeFlag(x);
+				state.x = state.a;
+				setZeroFlag(state.x);
+				setNegativeFlag(state.x);
 			} break;
 				
 			// TAY - Transfer Accumulator to Y
 			case 0xA8: {
-				y = a;
-				setZeroFlag(y);
-				setNegativeFlag(y);
+				state.y = state.a;
+				setZeroFlag(state.y);
+				setNegativeFlag(state.y);
 			} break;
 				
 			// TSX - Transfer Stack Pointer to X
 			case 0xBA: {
-				x = sp;
-				setZeroFlag(x);
-				setNegativeFlag(x);
+				state.x = state.sp;
+				setZeroFlag(state.x);
+				setNegativeFlag(state.x);
 			} break;
 				
 			// TXA - Transfer X to Accumulator
 			case 0x8A: {
-				a = x;
-				setZeroFlag(a);
-				setNegativeFlag(a);
+				state.a = state.x;
+				setZeroFlag(state.a);
+				setNegativeFlag(state.a);
 			} break;
 				
 			// TXS - Transfer X to Stack Pointer
 			case 0x9A: {
-				sp = x;
+				state.sp = state.x;
 			} break;
 				
 			// TYA - Transfer Y to Accumulator
 			case 0x98: {
-				a = y;
-				setZeroFlag(a);
-				setNegativeFlag(a);
+				state.a = state.y;
+				setZeroFlag(state.a);
+				setNegativeFlag(state.a);
 			} break;
 				
 			//     - Default action (Invalid Opcode)
 			default: {
-				System.out.format("!!! [CPU] Invalid: %X @ %X%n", readMemoryMap(pc)&0xFF, pc&0xFFFF);
+				System.out.format("!!! [CPU] Invalid: %X @ %X%n", readMemoryMap(state.pc)&0xFF, state.pc&0xFFFF);
 			}
 		}
 	}
@@ -1571,15 +1646,6 @@ public class RicohCPU implements Runnable {
 	 * @return Pretty String representation.
 	 */
 	public String toString() {
-		TableBuilder tableBuilder = new TableBuilder();
-		
-		tableBuilder.addRow("programCounter", Integer.toHexString(pc&0xFFFF));
-		tableBuilder.addRow("stackPointer",   Integer.toHexString(0x0100 + sp&0xFF));
-		tableBuilder.addRow("accumulator",    Integer.toHexString(a));
-		tableBuilder.addRow("indexX",         Integer.toHexString(x));
-		tableBuilder.addRow("indexY",         Integer.toHexString(y));
-		tableBuilder.addRow("status",         Integer.toBinaryString(s));
-		
-		return tableBuilder.toString();
+		return state.toString();
 	}
 }

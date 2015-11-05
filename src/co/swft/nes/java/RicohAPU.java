@@ -52,4 +52,15 @@ public class RicohAPU implements Runnable {
 	public void stop() {
 		running = false;
 	}
+	
+	@Override
+	public boolean equals(Object obj) {
+	    if(obj.getClass() == RicohAPU.class) {
+	    	//RicohAPU other = (RicohAPU) obj;
+	    	// TODO this
+	    	return true;
+	    } else {
+	    	return false;
+	    }
+	}
 }

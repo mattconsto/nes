@@ -2,14 +2,11 @@ package co.swft.nes.java;
 
 import java.awt.Color;
 import java.awt.GraphicsEnvironment;
-import java.awt.GridBagLayout;
 import java.awt.image.BufferedImage;
 
 import javax.swing.*;
 
 import co.swft.common.BitTools;
-
-import java.awt.GridBagConstraints;
 
 
 /**
