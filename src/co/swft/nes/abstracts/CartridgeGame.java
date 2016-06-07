@@ -11,7 +11,7 @@ import java.nio.file.Files;
 import java.util.HashMap;
 import java.util.Map;
 
-import co.swft.common.TableBuilder;
+import co.swft.util.TableBuilder;
 
 public abstract class CartridgeGame {
 	public byte[] code;

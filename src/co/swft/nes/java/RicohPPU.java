@@ -6,7 +6,7 @@ import java.awt.image.BufferedImage;
 
 import javax.swing.*;
 
-import co.swft.common.BitTools;
+import co.swft.util.BitTools;
 
 
 /**

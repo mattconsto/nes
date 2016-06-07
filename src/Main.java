@@ -1,6 +1,6 @@
-package co.swft.nes.java;
-
 import java.io.File;
+
+import co.swft.nes.java.*;
 
 /**
  * NES Emulator

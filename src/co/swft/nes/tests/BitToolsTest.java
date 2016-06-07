@@ -5,7 +5,7 @@ import static org.junit.Assert.fail;
 
 import org.junit.Test;
 
-import co.swft.common.BitTools;
+import co.swft.util.BitTools;
 
 public class BitToolsTest {
 	@Test

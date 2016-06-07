@@ -2,8 +2,8 @@ package co.swft.nes.java;
 
 import java.util.Arrays;
 
-import co.swft.common.BitTools;
-import co.swft.common.TableBuilder;
+import co.swft.util.BitTools;
+import co.swft.util.TableBuilder;
 
 /**
  * Ricoh CPU (2A03) Emulator for the Nintendo Entertainment System..
