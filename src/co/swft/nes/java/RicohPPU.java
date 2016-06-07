@@ -3,10 +3,21 @@ package co.swft.nes.java;
 import java.awt.Color;
 import java.awt.GraphicsEnvironment;
 import java.awt.image.BufferedImage;
+import java.io.IOException;
 
 import javax.swing.*;
 
 import co.swft.util.BitTools;
+import javafx.animation.AnimationTimer;
+import javafx.application.Application;
+import javafx.fxml.FXMLLoader;
+import javafx.scene.Parent;
+import javafx.scene.Scene;
+import javafx.scene.canvas.Canvas;
+import javafx.scene.image.PixelReader;
+import javafx.scene.image.PixelWriter;
+import javafx.scene.image.WritableImage;
+import javafx.stage.Stage;
 
 
 /**
@@ -21,6 +32,7 @@ import co.swft.util.BitTools;
  * @author Matthew Consterdine
  */
 public class RicohPPU implements Runnable {
+	
 	// Hardware
 	public NESCartridge game;
 	
@@ -41,8 +53,10 @@ public class RicohPPU implements Runnable {
 	
 	// Misc stuff
 	private boolean running      = false;
-	private JFrame frame         = new JFrame();
-    private BufferedImage image  = new BufferedImage(256, 240, BufferedImage.TYPE_INT_RGB);
+    private WritableImage image  = new WritableImage(256, 240);
+    private PixelReader   imageReader = image.getPixelReader();
+    private PixelWriter   imageWriter = image.getPixelWriter();
+    private Canvas canvas;
     private int frameRate        = 60;
 
 	/**
@@ -171,7 +185,7 @@ public class RicohPPU implements Runnable {
     		// Draw solid background
     		for(int x = 0; x < image.getWidth(); x++) {
     			for(int y = 0; y < image.getHeight(); y++) {
-    				image.setRGB(x, y, bg);
+    				imageWriter.setArgb(x, y, bg);
     			}
     		}
     		
@@ -200,7 +214,7 @@ public class RicohPPU implements Runnable {
     		    						
     		    						if(color > 0) {
     		    							// TODO: stop assuming pallet 0.
-    		    		    				image.setRGB(x*8+(8-k), y*8+j, palletToRGB(readMemoryMap(0x3f00 + color)));
+    		    							imageWriter.setArgb(x*8+(8-k), y*8+j, palletToRGB(readMemoryMap(0x3f00 + color)));
     		    						}
     		    					}
     		    				}
@@ -231,7 +245,7 @@ public class RicohPPU implements Runnable {
 //						byte data = readMemoryMap(spriteAddress + j);
 //						for(int k = 0; k < 8; k++) {
 //							if(BitTools.getBit(data, k))
-//								image.setRGB(xpos + j, ypos + k, 0xFFFFFF);
+//								imageWriter.setArgb(xpos + j, ypos + k, 0xFFFFFF);
 //						}
 //					}
 //    			}
@@ -241,10 +255,10 @@ public class RicohPPU implements Runnable {
     		if(BitTools.getBit(mask, 0)) {
     			for(int x = 0; x < image.getWidth(); x++) {
     				for(int y = 0; y < image.getHeight(); y++) {
-    					int rgb   = image.getRGB(x, y);
+    					int rgb   = imageReader.getArgb(x, y);
     					byte grey = (byte) (0.2989 * (rgb & 0xFF0000 >> 16) + 0.5870 * (rgb & 0x00FF00 >> 8) + 0.1140 * (rgb & 0x00FF >> 0));
     					rgb       = grey + (grey >> 8) + (grey >> 16);
-    					image.setRGB(x, y, rgb);
+    					imageWriter.setArgb(x, y, rgb);
     				}
     			}
     		}
@@ -253,13 +267,13 @@ public class RicohPPU implements Runnable {
     		if(BitTools.getBit(mask, 5)) {
     			for(int x = 0; x < image.getWidth(); x++) {
     				for(int y = 0; y < image.getHeight(); y++) {
-    					int  rgb = image.getRGB(x, y);
+    					int  rgb = imageReader.getArgb(x, y);
     					byte a[] = {(byte) (rgb & 0xFF0000 >> 16), (byte) (rgb & 0x00FF00 >> 8), (byte) (rgb & 0x00FF >> 0)};
     					a[0]    *= 1.2;
     					a[1]    *= 0.8;
     					a[2]    *= 0.8;
     					rgb      = a[0] << 16 + a[1] << 8 + a[0];
-    					image.setRGB(x, y, rgb);
+    					imageWriter.setArgb(x, y, rgb);
     				}
     			}
     		}
@@ -268,13 +282,13 @@ public class RicohPPU implements Runnable {
     		if(BitTools.getBit(mask, 6)) {
     			for(int x = 0; x < image.getWidth(); x++) {
     				for(int y = 0; y < image.getHeight(); y++) {
-    					int  rgb = image.getRGB(x, y);
+    					int  rgb = imageReader.getArgb(x, y);
     					byte a[] = {(byte) (rgb & 0xFF0000 >> 16), (byte) (rgb & 0x00FF00 >> 8), (byte) (rgb & 0x00FF >> 0)};
     					a[0]    *= 0.8;
     					a[1]    *= 1.2;
     					a[2]    *= 0.8;
     					rgb      = a[0] << 16 + a[1] << 8 + a[0];
-    					image.setRGB(x, y, rgb);
+    					imageWriter.setArgb(x, y, rgb);
     				}
     			}
     		}
@@ -283,18 +297,19 @@ public class RicohPPU implements Runnable {
     		if(BitTools.getBit(mask, 7)) {
     			for(int x = 0; x < image.getWidth(); x++) {
     				for(int y = 0; y < image.getHeight(); y++) {
-    					int  rgb = image.getRGB(x, y);
+    					int  rgb = imageReader.getArgb(x, y);
     					byte a[] = {(byte) (rgb & 0xFF0000 >> 16), (byte) (rgb & 0x00FF00 >> 8), (byte) (rgb & 0x00FF >> 0)};
     					a[0]    *= 0.8;
     					a[1]    *= 0.8;
     					a[2]    *= 1.2;
     					rgb      = a[0] << 16 + a[1] << 8 + a[0];
-    					image.setRGB(x, y, rgb);
+    					imageWriter.setArgb(x, y, rgb);
     				}
     			}
     		}
     		
-    		frame.repaint();
+//    		frame.repaint();
+    		canvas.getGraphicsContext2D().drawImage(image, 0, 0);
     		
     		long delta = (1000 / frameRate) - (System.currentTimeMillis() - startTime);
     		if(delta > 0) try {
@@ -307,25 +322,35 @@ public class RicohPPU implements Runnable {
 	}
 	
 	public static int palletToRGB(byte input) {
-		return new int[] {0x7C7C7C, 0x0000FC, 0x0000BC, 0x4428BC, 0x940084, 0xA80020, 0xA81000, 0x881400, 0x503000, 0x007800, 0x006800, 0x005800, 0x004058, 0x000000, 0x000000, 0x000000,
-            			  0xBCBCBC, 0x0078F8, 0x0058F8, 0x6844FC, 0xD800CC, 0xE40058, 0xF83800, 0xE45C10, 0xAC7C00, 0x00B800, 0x00A800, 0x00A844, 0x008888, 0x000000, 0x000000, 0x000000,
-            			  0xF8F8F8, 0x3CBCFC, 0x6888FC, 0x9878F8, 0xF878F8, 0xF85898, 0xF87858, 0xFCA044, 0xF8B800, 0xB8F818, 0x58D854, 0x58F898, 0x00E8D8, 0x787878, 0x000000, 0x000000,
-            			  0xFCFCFC, 0xA4E4FC, 0xB8B8F8, 0xD8B8F8, 0xF8B8F8, 0xF8A4C0, 0xF0D0B0, 0xFCE0A8, 0xF8D878, 0xD8F878, 0xB8F8B8, 0xB8F8D8, 0x00FCFC, 0xF8D8F8, 0x000000, 0x000000}[input];
+		return new int[] {0xFF7C7C7C, 0xFF0000FC, 0xFF0000BC, 0xFF4428BC, 0xFF940084, 0xFFA80020, 0xFFA81000, 0xFF881400, 0xFF503000, 0xFF007800, 0xFF006800, 0xFF005800, 0xFF004058, 0xFF000000, 0xFF000000, 0xFF000000,
+            			  0xFFBCBCBC, 0xFF0078F8, 0xFF0058F8, 0xFF6844FC, 0xFFD800CC, 0xFFE40058, 0xFFF83800, 0xFFE45C10, 0xFFAC7C00, 0xFF00B800, 0xFF00A800, 0xFF00A844, 0xFF008888, 0xFF000000, 0xFF000000, 0xFF000000,
+            			  0xFFF8F8F8, 0xFF3CBCFC, 0xFF6888FC, 0xFF9878F8, 0xFFF878F8, 0xFFF85898, 0xFFF87858, 0xFFFCA044, 0xFFF8B800, 0xFFB8F818, 0xFF58D854, 0xFF58F898, 0xFF00E8D8, 0xFF787878, 0xFF000000, 0xFF000000,
+            			  0xFFFCFCFC, 0xFFA4E4FC, 0xFFB8B8F8, 0xFFD8B8F8, 0xFFF8B8F8, 0xFFF8A4C0, 0xFFF0D0B0, 0xFFFCE0A8, 0xFFF8D878, 0xFFD8F878, 0xFFB8F8B8, 0xFFB8F8D8, 0xFF00FCFC, 0xFFF8D8F8, 0xFF000000, 0xFF000000}[input];
 	}
 	
 	public void stop() {
 		running = false;
 	}
 	
-	public RicohPPU(NESCartridge game) {
-		this.game = game;
 
-		frame.getContentPane().setBackground(Color.BLACK);
-        frame.getContentPane().add(new JLabel(new ImageIcon(image)));
-        frame.pack();
-		frame.setLocationRelativeTo(null);
-		frame.setTitle("Emulator");
-	    frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-		frame.setVisible(true);
+	public RicohPPU(Canvas canvas, NESCartridge game) throws IOException {
+		this.game  = game;
+		this.canvas = canvas;
 	}
+	
+//	
+//	public RicohPPU(NESCartridge game) throws IOException {
+//		this.game = game;
+//		
+//		launch("");
+//
+////		frame.getContentPane().setBackground(Color.BLACK);
+////        frame.getContentPane().add(new JLabel(new ImageIcon(image)));
+////        frame.pack();
+////		frame.setLocationRelativeTo(null);
+////		frame.setTitle("Emulator");
+////	    frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+////		frame.setVisible(true);
+//	}
+
 }

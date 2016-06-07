@@ -1,0 +1,97 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.scene.canvas.*?>
+<?import javafx.scene.image.*?>
+<?import javafx.scene.text.*?>
+<?import javafx.scene.control.*?>
+<?import java.lang.*?>
+<?import javafx.scene.layout.*?>
+
+<BorderPane prefHeight="400.0" prefWidth="600.0" fx:controller="Main" xmlns="http://javafx.com/javafx/8" xmlns:fx="http://javafx.com/fxml/1">
+   <top>
+      <MenuBar BorderPane.alignment="CENTER">
+        <menus>
+          <Menu text="File">
+            <items>
+                  <MenuItem onAction="#fileOpenROM" text="Open ROM" />
+              <MenuItem text="Close" />
+            </items>
+          </Menu>
+          <Menu text="Emulation">
+            <items>
+              <MenuItem text="Start/Stop" />
+                  <MenuItem text="Restart" />
+                  <MenuItem text="Save State" />
+                  <MenuItem text="Load State" />
+            </items>
+          </Menu>
+          <Menu text="Help">
+            <items>
+              <MenuItem text="About" />
+            </items>
+          </Menu>
+        </menus>
+      </MenuBar>
+   </top>
+   <center>
+      <TabPane tabClosingPolicy="UNAVAILABLE" BorderPane.alignment="CENTER">
+        <tabs>
+          <Tab text="Emulation">
+               <content>
+                  <BorderPane style="-fx-background-color: #000000;">
+                     <center>
+                        <Canvas fx:id="emulationCanvas" height="256.0" width="240.0" BorderPane.alignment="CENTER" />
+                     </center>
+                  </BorderPane>
+               </content>
+          </Tab>
+          <Tab text="Info">
+               <content>
+                  <TableView prefHeight="200.0" prefWidth="200.0">
+                    <columns>
+                      <TableColumn prefWidth="75.0" text="Property" />
+                      <TableColumn prefWidth="525.0" text="Description" />
+                    </columns>
+                  </TableView>
+               </content>
+          </Tab>
+            <Tab text="Debugger">
+               <content>
+                  <TableView prefHeight="200.0" prefWidth="200.0">
+                    <columns>
+                      <TableColumn prefWidth="75.0" text="Address" />
+                      <TableColumn prefWidth="525.0" text="Instruction" />
+                    </columns>
+                  </TableView>
+               </content>
+            </Tab>
+            <Tab text="Registers">
+               <content>
+                  <TableView prefHeight="200.0" prefWidth="200.0">
+                    <columns>
+                      <TableColumn prefWidth="75.0" text="Register" />
+                      <TableColumn prefWidth="525.0" text="Value" />
+                    </columns>
+                  </TableView>
+               </content>
+            </Tab>
+            <Tab text="RAM">
+              <content>
+                <AnchorPane minHeight="0.0" minWidth="0.0" prefHeight="180.0" prefWidth="200.0" />
+              </content>
+            </Tab>
+            <Tab text="Sprites" />
+            <Tab text="Pallets">
+              <content>
+                <AnchorPane minHeight="0.0" minWidth="0.0" prefHeight="180.0" prefWidth="200.0" />
+              </content>
+            </Tab>
+            <Tab text="Audio">
+              <content>
+                <AnchorPane minHeight="0.0" minWidth="0.0" prefHeight="180.0" prefWidth="200.0" />
+              </content>
+            </Tab>
+        </tabs>
+      </TabPane>
+   </center>
+</BorderPane>

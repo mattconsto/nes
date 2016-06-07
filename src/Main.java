@@ -1,13 +1,26 @@
+import java.awt.image.BufferedImage;
 import java.io.File;
 
 import co.swft.nes.java.*;
+import javafx.application.Application;
+import javafx.event.ActionEvent;
+import javafx.fxml.FXML;
+import javafx.fxml.FXMLLoader;
+import javafx.scene.Parent;
+import javafx.scene.Scene;
+import javafx.scene.canvas.Canvas;
+import javafx.scene.control.MenuItem;
+import javafx.scene.image.Image;
+import javafx.stage.Stage;
 
 /**
  * NES Emulator
  * 
  * @author Matthew Consterdine
  */
-public class Main {
+public class Main extends Application {
+	@FXML private Canvas emulationCanvas;
+	
 	public static void main(String[] args) {
 		/*
 		 * CPU:
@@ -38,11 +51,26 @@ public class Main {
 		 * Memory mappers:
 		 *  complex
 		 */
+		
+        Application.launch(args);
+	}
+
+	@Override
+	public void start(Stage stage) throws Exception {
+		Parent root = FXMLLoader.load(getClass().getResource("/co/swft/nes/ui/emulation.fxml"));
+	    
+        Scene scene = new Scene(root, 800, 600);
+        stage.setTitle("Emulation");
+        stage.setScene(scene);
+        stage.show();
+	}
+	
+	@FXML protected void fileOpenROM(ActionEvent event) {
 		try {
 	        NESCartridge game = new NESCartridge(new File("tools/hello/hello.nes"));
 	        
 	        RicohAPU apu = new RicohAPU();
-	        RicohPPU ppu = new RicohPPU(game);
+	        RicohPPU ppu = new RicohPPU(emulationCanvas, game);
 	        RicohCPU cpu = new RicohCPU(game, ppu, apu);
 	        
 	        Thread apuT = new Thread(apu);
