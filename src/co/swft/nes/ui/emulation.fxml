@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
+<?import javafx.geometry.*?>
 <?import javafx.scene.canvas.*?>
 <?import javafx.scene.image.*?>
 <?import javafx.scene.text.*?>
@@ -7,91 +8,94 @@
 <?import java.lang.*?>
 <?import javafx.scene.layout.*?>
 
-<BorderPane prefHeight="400.0" prefWidth="600.0" fx:controller="Main" xmlns="http://javafx.com/javafx/8" xmlns:fx="http://javafx.com/fxml/1">
-   <top>
-      <MenuBar BorderPane.alignment="CENTER">
-        <menus>
-          <Menu text="File">
-            <items>
-                  <MenuItem onAction="#fileOpenROM" text="Open ROM" />
-              <MenuItem text="Close" />
-            </items>
-          </Menu>
-          <Menu text="Emulation">
-            <items>
-              <MenuItem text="Start/Stop" />
-                  <MenuItem text="Restart" />
-                  <MenuItem text="Save State" />
-                  <MenuItem text="Load State" />
-            </items>
-          </Menu>
-          <Menu text="Help">
-            <items>
-              <MenuItem text="About" />
-            </items>
-          </Menu>
-        </menus>
-      </MenuBar>
-   </top>
-   <center>
-      <TabPane tabClosingPolicy="UNAVAILABLE" BorderPane.alignment="CENTER">
-        <tabs>
-          <Tab text="Emulation">
-               <content>
-                  <BorderPane style="-fx-background-color: #000000;">
-                     <center>
-                        <Canvas fx:id="emulationCanvas" height="256.0" width="240.0" BorderPane.alignment="CENTER" />
-                     </center>
-                  </BorderPane>
-               </content>
-          </Tab>
-          <Tab text="Info">
-               <content>
-                  <TableView prefHeight="200.0" prefWidth="200.0">
-                    <columns>
-                      <TableColumn prefWidth="75.0" text="Property" />
-                      <TableColumn prefWidth="525.0" text="Description" />
-                    </columns>
-                  </TableView>
-               </content>
-          </Tab>
-            <Tab text="Debugger">
-               <content>
-                  <TableView prefHeight="200.0" prefWidth="200.0">
-                    <columns>
-                      <TableColumn prefWidth="75.0" text="Address" />
-                      <TableColumn prefWidth="525.0" text="Instruction" />
-                    </columns>
-                  </TableView>
-               </content>
-            </Tab>
-            <Tab text="Registers">
-               <content>
-                  <TableView prefHeight="200.0" prefWidth="200.0">
-                    <columns>
-                      <TableColumn prefWidth="75.0" text="Register" />
-                      <TableColumn prefWidth="525.0" text="Value" />
-                    </columns>
-                  </TableView>
-               </content>
-            </Tab>
-            <Tab text="RAM">
-              <content>
-                <AnchorPane minHeight="0.0" minWidth="0.0" prefHeight="180.0" prefWidth="200.0" />
-              </content>
-            </Tab>
-            <Tab text="Sprites" />
-            <Tab text="Pallets">
-              <content>
-                <AnchorPane minHeight="0.0" minWidth="0.0" prefHeight="180.0" prefWidth="200.0" />
-              </content>
-            </Tab>
-            <Tab text="Audio">
-              <content>
-                <AnchorPane minHeight="0.0" minWidth="0.0" prefHeight="180.0" prefWidth="200.0" />
-              </content>
-            </Tab>
-        </tabs>
-      </TabPane>
-   </center>
+<BorderPane xmlns="http://javafx.com/javafx/8" xmlns:fx="http://javafx.com/fxml/1" prefHeight="400.0" prefWidth="600.0" fx:controller="Main">
+	<top>
+		<MenuBar BorderPane.alignment="CENTER">
+			<Menu text="File">
+				<MenuItem onAction="#fileOpenROM" text="Open ROM" />
+				<MenuItem onAction="#fileClose" text="Close" />
+			</Menu>
+			<Menu text="Emulation">
+				<MenuItem onAction="#emulationToggle" text="Start/Stop" />
+				<MenuItem onAction="#emulationRestart" text="Restart" />
+				<MenuItem onAction="#emulationSave" text="Save State" />
+				<MenuItem onAction="#emulationLoad" text="Load State" />
+			</Menu>
+			<Menu text="Help">
+				<MenuItem onAction="#helpAbout" text="About" />
+			</Menu>
+		</MenuBar>
+	</top>
+	<center>
+		<TabPane tabClosingPolicy="UNAVAILABLE" BorderPane.alignment="CENTER">
+			<Tab text="Emulation">
+				<BorderPane style="-fx-background-color: #000000;">
+					<center>
+						<Canvas fx:id="emulationCanvas" height="256.0" width="240.0" BorderPane.alignment="CENTER" />
+					</center>
+				</BorderPane>
+			</Tab>
+			<Tab text="Info">
+				<TableView>
+					<columns>
+						<TableColumn fx:id="infoProperty" prefWidth="75.0" text="Property" />
+						<TableColumn fx:id="infoDescription" prefWidth="525.0" text="Description" />
+					</columns>
+				</TableView>
+			</Tab>
+			<Tab text="Debugger">
+				<TableView>
+					<columns>
+						<TableColumn fx:id="debuggerAddress" prefWidth="75.0" text="Address" />
+						<TableColumn fx:id="debuggerInstruction" prefWidth="525.0" text="Instruction" />
+					</columns>
+				</TableView>
+			</Tab>
+			<Tab text="Registers">
+				<TableView>
+					<columns>
+						<TableColumn fx:id="registersRegister" prefWidth="75.0" text="Register" />
+						<TableColumn fx:id="registersValue" prefWidth="525.0" text="Value" />
+					</columns>
+				</TableView>
+			</Tab>
+			<Tab text="RAM" />
+			<Tab text="Sprites" />
+			<Tab text="Pallets" />
+			<Tab text="Audio" />
+			<Tab text="Log">
+				<VBox prefHeight="200.0" prefWidth="100.0">
+					<BorderPane prefHeight="0.0" prefWidth="600.0" VBox.vgrow="NEVER">
+						<left>
+							<HBox spacing="5.0" BorderPane.alignment="CENTER_LEFT">
+								<children>
+									<Text strokeType="OUTSIDE" strokeWidth="0.0" text="Level" textOrigin="CENTER" wrappingWidth="33.56689453125" HBox.hgrow="ALWAYS">
+										<HBox.margin>
+											<Insets bottom="5.0" top="5.0" />
+										</HBox.margin>
+									</Text>
+									<ChoiceBox fx:id="choiceLevels" prefWidth="150.0" />
+								</children>
+								<padding>
+									<Insets bottom="5.0" left="5.0" right="5.0" top="5.0" />
+								</padding>
+							</HBox>
+						</left>
+						<right>
+							<HBox alignment="CENTER_RIGHT" spacing="5.0" BorderPane.alignment="CENTER">
+								<children>
+									<ToggleButton fx:id="toggleTimestamps" text="Timestamps" />
+									<ToggleButton fx:id="togglePause" text="Pause" />
+								</children>
+								<padding>
+									<Insets bottom="5.0" left="5.0" right="5.0" top="5.0" />
+								</padding>
+							</HBox>
+						</right>
+					</BorderPane>
+					<BorderPane fx:id="consolePane" VBox.vgrow="ALWAYS" />
+				</VBox>
+			</Tab>
+		</TabPane>
+	</center>
 </BorderPane>

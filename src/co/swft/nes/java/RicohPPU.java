@@ -1,23 +1,16 @@
 package co.swft.nes.java;
 
-import java.awt.Color;
 import java.awt.GraphicsEnvironment;
-import java.awt.image.BufferedImage;
 import java.io.IOException;
 
-import javax.swing.*;
+import com.stackoverflow.jewelsea.Log;
+import com.stackoverflow.jewelsea.Logger;
 
 import co.swft.util.BitTools;
-import javafx.animation.AnimationTimer;
-import javafx.application.Application;
-import javafx.fxml.FXMLLoader;
-import javafx.scene.Parent;
-import javafx.scene.Scene;
 import javafx.scene.canvas.Canvas;
 import javafx.scene.image.PixelReader;
 import javafx.scene.image.PixelWriter;
 import javafx.scene.image.WritableImage;
-import javafx.stage.Stage;
 
 
 /**
@@ -32,6 +25,7 @@ import javafx.stage.Stage;
  * @author Matthew Consterdine
  */
 public class RicohPPU implements Runnable {
+	private Logger logger;
 	
 	// Hardware
 	public NESCartridge game;
@@ -171,7 +165,7 @@ public class RicohPPU implements Runnable {
 		// Get the monitors refresh rate
 	    int fps = GraphicsEnvironment.getLocalGraphicsEnvironment().getScreenDevices()[0].getDisplayMode().getRefreshRate();
 	    if(fps != 0) frameRate = fps;
-	    System.out.format("    [GPU] Running at %sHz%n", frameRate);
+	    logger.info("Running at %sHz", frameRate);
 
 		running = true;
 		
@@ -333,9 +327,12 @@ public class RicohPPU implements Runnable {
 	}
 	
 
-	public RicohPPU(Canvas canvas, NESCartridge game) throws IOException {
+	public RicohPPU(Log log, Canvas canvas, NESCartridge game) throws IOException {
+		this.logger = new Logger(log, "Picture");
 		this.game  = game;
 		this.canvas = canvas;
+		
+		logger.info("Created");
 	}
 	
 //	

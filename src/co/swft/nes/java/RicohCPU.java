@@ -1,9 +1,9 @@
 package co.swft.nes.java;
 
-import java.util.Arrays;
+import com.stackoverflow.jewelsea.Log;
+import com.stackoverflow.jewelsea.Logger;
 
 import co.swft.util.BitTools;
-import co.swft.util.TableBuilder;
 
 /**
  * Ricoh CPU (2A03) Emulator for the Nintendo Entertainment System..
@@ -23,79 +23,9 @@ import co.swft.util.TableBuilder;
  * @author Matthew Consterdine
  */
 public class RicohCPU implements Runnable {
-	public State        state;
+	private Logger logger;
 	
-	public class State implements Cloneable {
-		// Hardware
-		public NESCartridge game;
-		public RicohPPU     ppu;
-		public RicohAPU     apu;
-		
-		public byte[]  ram   = new byte[2 * 1024];	// Work RAM
-		public short   pc    = (short) 0x8000;		// Program Counter
-		public byte    sp    = (byte) 0xFD;			// Stack pointer
-		public byte    a     = 0;					// Accumulator
-		public byte    x     = 0;					// X index register
-		public byte    y     = 0;					// Y index register
-		public byte    s     = (byte) 0x02;			// Status register
-
-		public State(NESCartridge game, RicohPPU ppu, RicohAPU apu, byte[] ram, short pc, byte sp, byte a, byte x, byte y, byte s) {
-	        this.game = game;
-	        this.ppu = ppu;
-	        this.apu = apu;
-	        
-	        this.ram = ram;
-	        this.pc = pc;
-	        this.sp = sp;
-	        this.a = a;
-	        this.x = x;
-	        this.y = y;
-	        this.s = s;
-        }
-		
-		public State() {}
-
-		@Override
-		public String toString() {
-			TableBuilder tableBuilder = new TableBuilder();
-			
-			tableBuilder.addRow("programCounter", Integer.toHexString(pc&0xFFFF));
-			tableBuilder.addRow("stackPointer",   Integer.toHexString(0x0100 + sp&0xFF));
-			tableBuilder.addRow("accumulator",    Integer.toHexString(a));
-			tableBuilder.addRow("indexX",         Integer.toHexString(x));
-			tableBuilder.addRow("indexY",         Integer.toHexString(y));
-			tableBuilder.addRow("status",         Integer.toBinaryString(s));
-			
-			return tableBuilder.toString();
-		}
-		
-		@Override
-		public boolean equals(Object obj) {
-			// Check that both are States
-			if(obj.getClass() == State.class) {
-				// Convert once to save repetition
-				State other = (State) obj;
-				
-				return other.game.equals(this.game) &&
-					   other.ppu.equals(this.ppu) &&
-					   other.apu.equals(this.apu) &&
-					   Arrays.equals(other.ram, this.ram) &&
-					   other.pc == this.pc &&
-					   other.sp == this.sp &&
-					   other.a  == this.a  &&
-					   other.x  == this.x  &&
-					   other.y  == this.y  &&
-					   other.s  == this.s;
-			} else {
-				return false;
-			}
-		}
-		
-		@Override
-		protected State clone() {
-		    return new State(game, ppu, apu, ram, pc, sp, a, x, y, s);
-		}
-	}
+	public State        state;
 	
 	// List of instructions so we can display helpful info as we run through the game.
 	public String[] instructionSet = {
@@ -123,11 +53,13 @@ public class RicohCPU implements Runnable {
 	 * @param ppu PPU
 	 * @param apu APU
 	 */
-	public RicohCPU(NESCartridge game, RicohPPU ppu, RicohAPU apu) {
+	public RicohCPU(Log log, NESCartridge game, RicohPPU ppu, RicohAPU apu) {
+		this.logger = new Logger(log, "Processor");
 		this.state = new State();
 		this.state.game  = game;
 		this.state.ppu   = ppu;
 		this.state.apu   = apu;
+		logger.info("Created");
 	}
 	
 	/**
@@ -165,8 +97,8 @@ public class RicohCPU implements Runnable {
 	public boolean getNegativeFlag()        {printFlags(); return BitTools.getBit(state.s, 6);}
 	
 	public void printFlags() {
-		System.out.format(
-			"    [CPU] c=%d, z=%d, i=%d, d=%d, b=%d, o=%d, n=%d.%n",
+		logger.debug(
+			"Flags c=%d, z=%d, i=%d, d=%d, b=%d, o=%d, n=%d",
 			BitTools.getBit(state.s, 0)?1:0, BitTools.getBit(state.s, 1)?1:0,
 			BitTools.getBit(state.s, 2)?1:0, BitTools.getBit(state.s, 3)?1:0,
 			BitTools.getBit(state.s, 4)?1:0, BitTools.getBit(state.s, 5)?1:0,
@@ -209,28 +141,25 @@ public class RicohCPU implements Runnable {
 			l = (short) (l % 8);
 			switch(l) {
 				case 0: // PPU Control Register 1
-					System.out.println("!!! [CPU] Write only c[0]!"); break;
+					logger.warn("Write only c[0]!"); break;
 				case 1: // PPU Control Register 2
-					System.out.println("!!! [CPU] Write only c[1]!"); break;
+					logger.warn("Write only c[1]!"); break;
 				case 2: // PPU Status Register
 					byte temp  = state.ppu.status;
 					// Clear VBLANK
 					state.ppu.status = BitTools.setBit(temp, 7, false);
 					return temp;
 				case 3: // Sprite Memory Access
-					System.out.println("!!! [CPU] Write only c[3]!"); break;
+					logger.warn("Write only c[3]!"); break;
 				case 4: // Sprite Memory Data
 					return state.ppu.OAMRAM[state.ppu.oamAddress & 0xFF];
 				case 5: // Background Scroll
-					System.out.println("!!! [CPU] Write only c[5]!"); break;
+					logger.warn("Write only c[5]!"); break;
 				case 6: // PPU Memory Address
-					System.out.println("!!! [CPU] Write only c[6]!"); break;
+					logger.warn("Write only c[6]!"); break;
 				case 7: // PPU Memory Data
 					state.ppu.address += BitTools.getBit(state.ppu.status, 2) ? 32 : 1;
 					return state.ppu.videoRAM[state.ppu.address & 0xFF];
-				default:
-					System.out.println("!!! [CPU] Something really bad has happened to modulo");
-					return 0;
 			}
 		} else if(l < 0x4020) {
 			// Registers (Mostly APU)
@@ -239,16 +168,16 @@ public class RicohCPU implements Runnable {
 				// Sound (0x4000-0x400F)
 				// DMC (0x4010-0x4013)
 				case 0x4014: // Sprite DMA Memory Access
-					System.out.println("!!! [CPU] Write only io[14]!"); break;
+					logger.warn("Write only io[14]!"); break;
 				// Sound (0x4015) - Toggle channels
 				// Gamepad (0x4016-0x4017)
 				default:
-					System.out.format("!!! [APU] Sound not implemented\n");
+					logger.warn("Sound not implemented");
 					return 0;
 			}
 		} else if(l < 0x6000) {
 			// Cartridge Expansion ROM
-			System.out.println("!!! [CPU] Cartridge Expansion ROM not implemented");
+			logger.warn("Cartridge Expansion ROM not implemented");
 			return 0;
 		} else if(l < 0x8000) {
 			// SRAM
@@ -258,7 +187,7 @@ public class RicohCPU implements Runnable {
 			//System.out.format("read from %x = %x%n", (l - 0x8000) % game.prg.length, game.prg[(l - 0x8000) % game.prg.length]);
 			return state.game.prg[(l - 0x8000) % state.game.prg.length];
 		} else {
-			System.out.println("!!! [CPU] Invalid Address.");
+			logger.warn("Invalid Address");
 		}
 		return 0;
 	}
@@ -281,7 +210,7 @@ public class RicohCPU implements Runnable {
 		int l = location & 0xFFFF;
 		//System.out.format("Writing %X into %X%n", v, l);
 		
-		if(l >= 0x0100 && l < 0x0200) System.out.println("!!! [CPU] Writing too stack!");
+		if(l >= 0x0100 && l < 0x0200) logger.error("Writing too stack!");
 		
 		if       (l < 0x2000) {
 		    // Direct work ram. Mirrored 3 times
@@ -295,7 +224,7 @@ public class RicohCPU implements Runnable {
 				case 1: // PPU Control Register 2
 					state.ppu.mask = v; break;
 				case 2: // PPU Status Register
-					System.out.println("!!! Read only c[2]!"); break;
+					logger.warn("Read only c[2]!"); break;
 				case 3: // Sprite Memory Access
 					state.ppu.oamAddress = v; break;
 				case 4: // Sprite Memory Data
@@ -327,7 +256,7 @@ public class RicohCPU implements Runnable {
 				// DMC (0x4010-0x4013)
 				// Sprite (0x4014)
 				case 0x14:
-					System.out.format("!!! [CPU] not implemented\n");
+					logger.warn("not implemented\n");
 					break;
 				// Sound (0x4015) - Toggle channels
 				// Gamepad (0x4016-0x4017)
@@ -336,15 +265,15 @@ public class RicohCPU implements Runnable {
 			}
 		} else if(l < 0x6000) {
 			// Cartridge Expansion ROM
-			System.out.println("!!! [CPU] Cannot write to Cartridge ROM.");
+			logger.warn("Cannot write to Cartridge ROM.");
 		} else if(l < 0x8000) {
 			// SRAM
 			state.game.save[l - 0x6000] = v;
 		} else if(l <= 0xFFFF) {
 			// PRG-ROM
-			System.out.println("!!! [CPU] Cannot write to PRG-ROM.");
+			logger.warn("Cannot write to PRG-ROM.");
 		} else {
-			System.out.println("!!! [CPU] Invalid Address.");
+			logger.warn("Invalid Address.");
 		}
 	}
 
@@ -456,16 +385,14 @@ public class RicohCPU implements Runnable {
 	 * run() starts the emulation.
 	 */
 	public void run() {
-		System.out.println("    [CPU] Starting Emulation");
-		
-		System.out.println("\n          Counter\tInstruction\tAddressing\t\n============================================================");
+		logger.info("Starting Emulation");
 		
 		// Run until we reach the end
 		for(; !getBreakFlag(); state.pc++) {
 			//try{Thread.sleep(1);}catch(Exception e){}
 			
 			// Print out log
-			System.out.format("    [CPU] $%04x\t$%4$04x\t" + instructionSet[readMemoryMap(state.pc)&0xFF] + "\n", state.pc, readMemoryMap(state.pc+1)&0xFF, readMemoryMap(state.pc+2)&0xFF, (short) (state.pc + 0x10 - 0x8000));
+//			System.out.format("$%04x\t$%4$04x\t%s\n", state.pc, readMemoryMap(state.pc+1)&0xFF, readMemoryMap(state.pc+2)&0xFF, (short) (state.pc + 0x10 - 0x8000), instructionSet[readMemoryMap(state.pc)&0xFF]);
 			
 //			State old = state.clone();
 			
@@ -687,7 +614,7 @@ public class RicohCPU implements Runnable {
 			// BCC - Branch if Carry Clear
 			case 0x90: {
 				if(!getCarryFlag()) {
-					System.out.println("    [CPU] Branched");
+					logger.debug("Branched");
 					state.pc += readImmediate() + 1;
 				} else {
 					state.pc++;
@@ -697,7 +624,7 @@ public class RicohCPU implements Runnable {
 			// BCS - Branch if Carry Set
 			case 0xB0: {
 				if(getCarryFlag()) {
-					System.out.println("    [CPU] Branched");
+					logger.debug("Branched");
 					state.pc += readImmediate() + 1;
 				} else {
 					state.pc++;
@@ -707,7 +634,7 @@ public class RicohCPU implements Runnable {
 			// BEQ - Branch if Equal
 			case 0xF0: {
 				if(getZeroFlag()) {
-					System.out.println("    [CPU] Branched");
+					logger.debug("Branched");
 					state.pc += readImmediate() + 1;
 				} else {
 					state.pc++;
@@ -732,7 +659,7 @@ public class RicohCPU implements Runnable {
 			// BMI - Branch if Minus
 			case 0x30: {
 				if(getNegativeFlag()) {
-					System.out.println("    [CPU] Branched");
+					logger.debug("Branched");
 					state.pc += readImmediate() + 1;
 				} else {
 					state.pc++;
@@ -742,7 +669,7 @@ public class RicohCPU implements Runnable {
 			// BNE - Branch if Not Equal
 			case 0xD0: {
 				if(!getZeroFlag()) {
-					System.out.println("    [CPU] Branched");
+					logger.debug("Branched");
 					state.pc += readImmediate() + 1;
 				} else {
 					state.pc++;
@@ -752,7 +679,7 @@ public class RicohCPU implements Runnable {
 			// BPL - Branch if Positive
 			case 0x10: {
 				if(!getNegativeFlag()) {
-					System.out.println("    [CPU] Branched");
+					logger.debug("Branched");
 					state.pc += readImmediate() + 1;
 				} else {
 					state.pc++;
@@ -765,14 +692,14 @@ public class RicohCPU implements Runnable {
 				pushStack((byte) ((state.pc & 0xFF00) >> 8));
 				pushStack(state.s);
 				state.pc = (short) (readMemoryMap((short) 0xFFFE) | (readMemoryMap((short) 0xFFFF) << 8));
-				System.out.println("!!! [CPU] Force Interupt");
+				logger.warn("Force Interupt");
 				setBreakFlag(true);
 			} break;
 			
 			// BVC - Branch if Overflow Clear
 			case 0x50: {
 				if(!getOverflowFlag()) {
-					System.out.println("    [CPU] Branched");
+					logger.debug("Branched");
 					state.pc += readImmediate() + 1;
 				} else {
 					state.pc++;
@@ -782,7 +709,7 @@ public class RicohCPU implements Runnable {
 			// BVS - Branch if Overflow Set
 			case 0x70: {
 				if(getOverflowFlag()) {
-					System.out.println("    [CPU] Branched");
+					logger.debug("Branched");
 					state.pc += readImmediate() + 1;
 				} else {
 					state.pc++;
@@ -1636,7 +1563,7 @@ public class RicohCPU implements Runnable {
 				
 			//     - Default action (Invalid Opcode)
 			default: {
-				System.out.format("!!! [CPU] Invalid: %X @ %X%n", readMemoryMap(state.pc)&0xFF, state.pc&0xFFFF);
+				logger.error("Invalid: %X @ %X%n", readMemoryMap(state.pc)&0xFF, state.pc&0xFFFF);
 			}
 		}
 	}

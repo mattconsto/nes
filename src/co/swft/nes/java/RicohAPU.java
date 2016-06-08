@@ -2,12 +2,17 @@ package co.swft.nes.java;
 
 import java.util.Arrays;
 
+import com.stackoverflow.jewelsea.Log;
+import com.stackoverflow.jewelsea.Logger;
+
 /**
  * Ricoh APU
  * 
  * @author Matthew Consterdine
  */
 public class RicohAPU implements Runnable {
+	private Logger logger;
+	
 	private boolean running = false;
 	
 	byte[] pulse1   = new byte[4];
@@ -18,6 +23,11 @@ public class RicohAPU implements Runnable {
 	
 	byte status     = 0;
 	byte counter    = 0;
+	
+	public RicohAPU(Log log) {
+		logger = new Logger(log, "Audio");
+		logger.info("Created");
+	}
 	
 	public void update(byte[] in) {
 		if(in.length == 0x20) {
@@ -31,9 +41,9 @@ public class RicohAPU implements Runnable {
 			status   = (byte) (in[0x15] & 0xDF);
 			counter  = (byte) (in[0x17] & 0xC0);
 			
-			System.out.println("[APU] Updated.");
+			logger.debug("Updated");
 		} else {
-			System.err.format("[APU] Invalid length update. Got %d, expected %d.", in.length, 0x20);
+			logger.error("Invalid length update. Got %d, expected %d.", in.length, 0x20);
 		}
 	}
 	

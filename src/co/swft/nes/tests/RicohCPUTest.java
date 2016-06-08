@@ -9,7 +9,7 @@ import co.swft.nes.java.RicohCPU;
 public class RicohCPUTest {
 	@Test
 	public void testAllCPUFlags() {
-		RicohCPU cpu = new RicohCPU(null, null, null);
+		RicohCPU cpu = new RicohCPU(null, null, null, null);
 		
 		assertFalse(cpu.getCarryFlag());
 		cpu.setCarryFlag(true);
@@ -68,7 +68,7 @@ public class RicohCPUTest {
 
 	@Test
 	public void testCPUStack() {
-		RicohCPU cpu = new RicohCPU(null, null, null);
+		RicohCPU cpu = new RicohCPU(null, null, null, null);
 		
 		cpu.pushStack((byte) 0x01);
 		cpu.pushStack((byte) 0xFF);
@@ -131,7 +131,7 @@ public class RicohCPUTest {
 	@SuppressWarnings("unused")
     @Test
 	public void testInstructionSet() {
-		RicohCPU cpu = new RicohCPU(null, null, null);
+		RicohCPU cpu = new RicohCPU(null, null, null, null);
 		
 		// TODO: Write test
 	}
