@@ -1,11 +1,11 @@
 package co.swft.nes.java;
 
 import java.awt.GraphicsEnvironment;
-import java.io.IOException;
 
 import com.stackoverflow.jewelsea.Log;
 import com.stackoverflow.jewelsea.Logger;
 
+import co.swft.nes.abstracts.Controlable;
 import co.swft.util.BitTools;
 import javafx.scene.canvas.Canvas;
 import javafx.scene.image.PixelReader;
@@ -24,7 +24,7 @@ import javafx.scene.image.WritableImage;
  * 
  * @author Matthew Consterdine
  */
-public class RicohPPU implements Runnable {
+public class RicohPPU extends Controlable {
 	private Logger logger;
 	
 	// Hardware
@@ -46,7 +46,6 @@ public class RicohPPU implements Runnable {
 	public boolean addressState = true;
 	
 	// Misc stuff
-	private boolean running      = false;
     private WritableImage image  = new WritableImage(256, 240);
     private PixelReader   imageReader = image.getPixelReader();
     private PixelWriter   imageWriter = image.getPixelWriter();
@@ -63,7 +62,7 @@ public class RicohPPU implements Runnable {
 		
 		if       (l < 0x2000) {
 			// 2CHR Banks. Pattern tables for sprites and background.
-			return game.chr[l];
+			return game.CHR_ROM[l];
 		} else if(l < 0x3000) {
 			// 4 Name tables
 			if(game.Mirroring) {
@@ -117,7 +116,7 @@ public class RicohPPU implements Runnable {
 		
 		if       (l < 0x2000) {
 			// 2CHR Banks. Pattern tables for sprites and background.
-			game.chr[l] = v;
+			game.CHR_ROM[l] = v;
 		} else if(l < 0x3000) {
 			// 4 Name tables
 			if(game.Mirroring) {
@@ -166,10 +165,8 @@ public class RicohPPU implements Runnable {
 	    int fps = GraphicsEnvironment.getLocalGraphicsEnvironment().getScreenDevices()[0].getDisplayMode().getRefreshRate();
 	    if(fps != 0) frameRate = fps;
 	    logger.info("Running at %sHz", frameRate);
-
-		running = true;
 		
-		while(running) {
+		while(!stopFlag) {
 			long startTime = System.currentTimeMillis();
 			
 			status = BitTools.toggleBit(status, 7);
@@ -312,6 +309,8 @@ public class RicohPPU implements Runnable {
 	            // TODO Auto-generated catch block
 	            e.printStackTrace();
             }
+    		
+    		checkMonitor();
 		}
 	}
 	
@@ -322,12 +321,8 @@ public class RicohPPU implements Runnable {
             			  0xFFFCFCFC, 0xFFA4E4FC, 0xFFB8B8F8, 0xFFD8B8F8, 0xFFF8B8F8, 0xFFF8A4C0, 0xFFF0D0B0, 0xFFFCE0A8, 0xFFF8D878, 0xFFD8F878, 0xFFB8F8B8, 0xFFB8F8D8, 0xFF00FCFC, 0xFFF8D8F8, 0xFF000000, 0xFF000000}[input];
 	}
 	
-	public void stop() {
-		running = false;
-	}
-	
 
-	public RicohPPU(Log log, Canvas canvas, NESCartridge game) throws IOException {
+	public RicohPPU(Log log, Canvas canvas, NESCartridge game) {
 		this.logger = new Logger(log, "Picture");
 		this.game  = game;
 		this.canvas = canvas;

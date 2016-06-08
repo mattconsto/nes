@@ -3,6 +3,7 @@ package co.swft.nes.java;
 import com.stackoverflow.jewelsea.Log;
 import com.stackoverflow.jewelsea.Logger;
 
+import co.swft.nes.abstracts.Controlable;
 import co.swft.util.BitTools;
 
 /**
@@ -22,10 +23,10 @@ import co.swft.util.BitTools;
  * 
  * @author Matthew Consterdine
  */
-public class RicohCPU implements Runnable {
+public class RicohCPU extends Controlable {
 	private Logger logger;
 	
-	public State        state;
+	public co.swft.nes.java.State state;
 	
 	// List of instructions so we can display helpful info as we run through the game.
 	public String[] instructionSet = {
@@ -55,7 +56,7 @@ public class RicohCPU implements Runnable {
 	 */
 	public RicohCPU(Log log, NESCartridge game, RicohPPU ppu, RicohAPU apu) {
 		this.logger = new Logger(log, "Processor");
-		this.state = new State();
+		this.state = new co.swft.nes.java.State();
 		this.state.game  = game;
 		this.state.ppu   = ppu;
 		this.state.apu   = apu;
@@ -185,7 +186,7 @@ public class RicohCPU implements Runnable {
 		} else if(l <= 0xFFFF) {
 			// PRG-ROM
 			//System.out.format("read from %x = %x%n", (l - 0x8000) % game.prg.length, game.prg[(l - 0x8000) % game.prg.length]);
-			return state.game.prg[(l - 0x8000) % state.game.prg.length];
+			return state.game.PRG_ROM[(l - 0x8000) % state.game.PRG_ROM.length];
 		} else {
 			logger.warn("Invalid Address");
 		}
@@ -388,7 +389,7 @@ public class RicohCPU implements Runnable {
 		logger.info("Starting Emulation");
 		
 		// Run until we reach the end
-		for(; !getBreakFlag(); state.pc++) {
+		for(; !stopFlag && !getBreakFlag(); state.pc++) {
 			//try{Thread.sleep(1);}catch(Exception e){}
 			
 			// Print out log
@@ -397,6 +398,8 @@ public class RicohCPU implements Runnable {
 //			State old = state.clone();
 			
 			executeInstruction(readMemoryMap(state.pc));
+			
+			checkMonitor();
 			
 			// Automatically end emulation if we start to loop without any changes.
 //			if(old.equals(state)) {

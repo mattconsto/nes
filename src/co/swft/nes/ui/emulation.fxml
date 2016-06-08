@@ -1,5 +1,4 @@
 <?xml version="1.0" encoding="UTF-8"?>
-
 <?import javafx.geometry.*?>
 <?import javafx.scene.canvas.*?>
 <?import javafx.scene.image.*?>
@@ -7,7 +6,6 @@
 <?import javafx.scene.control.*?>
 <?import java.lang.*?>
 <?import javafx.scene.layout.*?>
-
 <BorderPane xmlns="http://javafx.com/javafx/8" xmlns:fx="http://javafx.com/fxml/1" prefHeight="400.0" prefWidth="600.0" fx:controller="Main">
 	<top>
 		<MenuBar BorderPane.alignment="CENTER">
@@ -36,7 +34,7 @@
 				</BorderPane>
 			</Tab>
 			<Tab text="Info">
-				<TableView>
+				<TableView fx:id="infoTable">
 					<columns>
 						<TableColumn fx:id="infoProperty" prefWidth="75.0" text="Property" />
 						<TableColumn fx:id="infoDescription" prefWidth="525.0" text="Description" />
@@ -44,7 +42,7 @@
 				</TableView>
 			</Tab>
 			<Tab text="Debugger">
-				<TableView>
+				<TableView fx:id="debuggerTable">
 					<columns>
 						<TableColumn fx:id="debuggerAddress" prefWidth="75.0" text="Address" />
 						<TableColumn fx:id="debuggerInstruction" prefWidth="525.0" text="Instruction" />
@@ -52,7 +50,7 @@
 				</TableView>
 			</Tab>
 			<Tab text="Registers">
-				<TableView>
+				<TableView fx:id="registerTable">
 					<columns>
 						<TableColumn fx:id="registersRegister" prefWidth="75.0" text="Register" />
 						<TableColumn fx:id="registersValue" prefWidth="525.0" text="Value" />
@@ -60,8 +58,32 @@
 				</TableView>
 			</Tab>
 			<Tab text="RAM" />
-			<Tab text="Sprites" />
-			<Tab text="Pallets" />
+			<Tab text="Sprites">
+				<VBox>
+					<BorderPane>
+						<left>
+							<HBox spacing="5.0" BorderPane.alignment="CENTER">
+								<children>
+									<Text strokeType="OUTSIDE" strokeWidth="0.0" text="Pallet">
+										<HBox.margin>
+											<Insets bottom="5.0" top="5.0" />
+										</HBox.margin>
+									</Text>
+									<ComboBox fx:id="spritesPallet" prefWidth="150.0" />
+								</children>
+								<padding>
+									<Insets bottom="5.0" left="5.0" right="5.0" top="5.0" />
+								</padding>
+							</HBox>
+						</left>
+					</BorderPane>
+					<BorderPane style="-fx-background-color: #000000;" VBox.vgrow="ALWAYS">
+						<center>
+							<Canvas fx:id="spritesCanvas" height="256.0" width="240.0" BorderPane.alignment="CENTER" />
+						</center>
+					</BorderPane>
+				</VBox>
+			</Tab>
 			<Tab text="Audio" />
 			<Tab text="Log">
 				<VBox prefHeight="200.0" prefWidth="100.0">

@@ -48,8 +48,8 @@ public abstract class CartridgeGame {
 	public String toString() {
 		TableBuilder tableBuilder = new TableBuilder();
 		
-		for(Map.Entry<String, Object> entry : properties.entrySet())
-            tableBuilder.addRow(entry.getKey(), entry.getValue().toString());
+//		for(Map.Entry<String, Object> entry : properties.entrySet())
+//            tableBuilder.addRow(entry.getKey(), entry.getValue().toString());
 		
 		// TODO: Crappy reflective way. Remove
 		for(Field field : this.getClass().getDeclaredFields()) {

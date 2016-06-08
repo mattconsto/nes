@@ -1,0 +1,161 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.geometry.*?>
+<?import javafx.scene.canvas.*?>
+<?import javafx.scene.image.*?>
+<?import javafx.scene.text.*?>
+<?import javafx.scene.control.*?>
+<?import java.lang.*?>
+<?import javafx.scene.layout.*?>
+
+<BorderPane prefHeight="400.0" prefWidth="600.0" xmlns="http://javafx.com/javafx/8" xmlns:fx="http://javafx.com/fxml/1" fx:controller="Main">
+   <top>
+      <MenuBar BorderPane.alignment="CENTER">
+        <menus>
+          <Menu text="File">
+            <items>
+              <MenuItem onAction="#fileOpenROM" text="Open ROM" />
+              <MenuItem onAction="#fileClose" text="Close" />
+            </items>
+          </Menu>
+          <Menu text="Emulation">
+            <items>
+              <MenuItem text="Start/Stop" />
+                  <MenuItem text="Restart" />
+                  <MenuItem text="Save State" />
+                  <MenuItem text="Load State" />
+            </items>
+          </Menu>
+          <Menu text="Help">
+            <items>
+              <MenuItem text="About" />
+            </items>
+          </Menu>
+        </menus>
+      </MenuBar>
+   </top>
+   <center>
+      <TabPane tabClosingPolicy="UNAVAILABLE" BorderPane.alignment="CENTER">
+        <tabs>
+          <Tab text="Emulation">
+               <content>
+                  <BorderPane style="-fx-background-color: #000000;">
+                     <center>
+                        <Canvas fx:id="emulationCanvas" height="256.0" width="240.0" BorderPane.alignment="CENTER" />
+                     </center>
+                  </BorderPane>
+               </content>
+          </Tab>
+          <Tab text="Info">
+               <content>
+                  <TableView prefHeight="200.0" prefWidth="200.0">
+                    <columns>
+                      <TableColumn prefWidth="75.0" text="Property" />
+                      <TableColumn prefWidth="525.0" text="Description" />
+                    </columns>
+                  </TableView>
+               </content>
+          </Tab>
+            <Tab text="Debugger">
+               <content>
+                  <TableView prefHeight="200.0" prefWidth="200.0">
+                    <columns>
+                      <TableColumn prefWidth="75.0" text="Address" />
+                      <TableColumn prefWidth="525.0" text="Instruction" />
+                    </columns>
+                  </TableView>
+               </content>
+            </Tab>
+            <Tab text="Registers">
+               <content>
+                  <TableView prefHeight="200.0" prefWidth="200.0">
+                    <columns>
+                      <TableColumn prefWidth="75.0" text="Register" />
+                      <TableColumn prefWidth="525.0" text="Value" />
+                    </columns>
+                  </TableView>
+               </content>
+            </Tab>
+            <Tab text="RAM">
+              <content>
+                <AnchorPane minHeight="0.0" minWidth="0.0" prefHeight="180.0" prefWidth="200.0" />
+              </content>
+            </Tab>
+            <Tab text="Sprites">
+               <content>
+                  <VBox prefHeight="200.0" prefWidth="100.0">
+                     <children>
+                        <BorderPane>
+                           <left>
+                              <HBox spacing="5.0" BorderPane.alignment="CENTER">
+                                 <children>
+                                    <Text strokeType="OUTSIDE" strokeWidth="0.0" text="Pallet">
+                                       <HBox.margin>
+                                          <Insets bottom="5.0" top="5.0" />
+                                       </HBox.margin>
+                                    </Text>
+                                    <ChoiceBox prefWidth="150.0" />
+                                 </children>
+                                 <padding>
+                                    <Insets bottom="5.0" left="5.0" right="5.0" top="5.0" />
+                                 </padding>
+                              </HBox>
+                           </left>
+                        </BorderPane>
+                        <BorderPane style="-fx-background-color: #000000;" VBox.vgrow="ALWAYS" />
+                     </children>
+                  </VBox>
+               </content></Tab>
+            <Tab text="Audio">
+              <content>
+                <AnchorPane minHeight="0.0" minWidth="0.0" prefHeight="180.0" prefWidth="200.0" />
+              </content>
+            </Tab>
+            <Tab text="Log">
+               <content>
+                  <VBox prefHeight="200.0" prefWidth="100.0">
+                     <children>
+                        <BorderPane prefHeight="0.0" prefWidth="600.0" VBox.vgrow="NEVER">
+                           <left>
+                              <HBox spacing="5.0" BorderPane.alignment="CENTER_LEFT">
+                                 <children>
+                                    <Text strokeType="OUTSIDE" strokeWidth="0.0" text="Level" textOrigin="CENTER" wrappingWidth="33.56689453125" HBox.hgrow="ALWAYS">
+                                       <HBox.margin>
+                                          <Insets bottom="5.0" top="5.0" />
+                                       </HBox.margin>
+                                    </Text>
+                                    <ChoiceBox prefWidth="150.0" />
+                                 </children>
+                                 <padding>
+                                    <Insets bottom="5.0" left="5.0" right="5.0" top="5.0" />
+                                 </padding>
+                                 <BorderPane.margin>
+                                    <Insets />
+                                 </BorderPane.margin>
+                              </HBox>
+                           </left>
+                           <right>
+                              <HBox alignment="CENTER_RIGHT" spacing="5.0" BorderPane.alignment="CENTER">
+                                 <children>
+                                    <ToggleButton mnemonicParsing="false" text="Timestamps" />
+                                    <ToggleButton mnemonicParsing="false" text="Pause" />
+                                 </children>
+                                 <padding>
+                                    <Insets bottom="5.0" left="5.0" right="5.0" top="5.0" />
+                                 </padding>
+                              </HBox>
+                           </right>
+                        </BorderPane>
+                        <Separator prefWidth="200.0" VBox.vgrow="NEVER" />
+                        <BorderPane fx:id="consolePane" VBox.vgrow="ALWAYS">
+                           <center>
+                              <Text strokeType="OUTSIDE" strokeWidth="0.0" text="Loading Log..." BorderPane.alignment="CENTER" />
+                           </center>
+                        </BorderPane>
+                     </children>
+                  </VBox>
+               </content></Tab>
+        </tabs>
+      </TabPane>
+   </center>
+</BorderPane>

@@ -5,15 +5,15 @@ import java.util.Arrays;
 import com.stackoverflow.jewelsea.Log;
 import com.stackoverflow.jewelsea.Logger;
 
+import co.swft.nes.abstracts.Controlable;
+
 /**
  * Ricoh APU
  * 
  * @author Matthew Consterdine
  */
-public class RicohAPU implements Runnable {
+public class RicohAPU extends Controlable {
 	private Logger logger;
-	
-	private boolean running = false;
 	
 	byte[] pulse1   = new byte[4];
 	byte[] pulse2   = new byte[4];
@@ -51,16 +51,12 @@ public class RicohAPU implements Runnable {
 		return null;
 	}
 	
+	@Override
 	public void run() {
-		running = true;
-		
-		while(running) {
-			
+		while(!stopFlag) {
+			/** Code **/
+			checkMonitor();
 		}
-	}
-	
-	public void stop() {
-		running = false;
 	}
 	
 	@Override
