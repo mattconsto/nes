@@ -33,8 +33,11 @@ import javafx.scene.control.TableColumn;
 import javafx.scene.control.TableView;
 import javafx.scene.control.TableColumn.CellDataFeatures;
 import javafx.scene.control.ToggleButton;
+import javafx.scene.image.PixelWriter;
 import javafx.scene.control.Alert.AlertType;
 import javafx.scene.layout.BorderPane;
+import javafx.scene.paint.Color;
+import javafx.scene.shape.Shape;
 import javafx.stage.FileChooser;
 import javafx.stage.Stage;
 import javafx.util.Callback;
@@ -85,7 +88,7 @@ public class Main extends Application {
 	@FXML private TableColumn<ObservableList<String>, String> registerRegister;
 	@FXML private TableColumn<ObservableList<String>, String> registerValue;
 	
-	@FXML private ComboBox<String> spritesPallet;
+	@FXML private ComboBox<Integer> spritesPallet;
 	@FXML private Canvas spritesCanvas;
 
 	@FXML private ChoiceBox<Level> choiceLevels;
@@ -110,6 +113,31 @@ public class Main extends Application {
 
 		stage.show();
 	}
+	
+	private void generateSprites() {
+		PixelWriter writer = spritesCanvas.getGraphicsContext2D().getPixelWriter();
+		byte[] defaultPallet = new byte[] {0x3f, 0x06, 0x02, 0x30};
+		
+		for(int sprite = 0; sprite < 512; sprite++) {
+			for(int line = 0; line < 8; line++) {
+				byte plane1 = ppu.readMemoryMap(sprite*16 + line);
+				byte plane2 = ppu.readMemoryMap(sprite*16 + line + 8);
+				
+				for(int bit = 0; bit < 8; bit++) {
+					int value = ((plane1 >> (7 - bit)) & 1) | ((plane2 >> (7 - bit)) & 1) * 2;
+					byte color;
+					if(spritesPallet.getSelectionModel().getSelectedItem() == -1) {
+						color = defaultPallet[value];
+					} else {
+						color = ppu.readMemoryMap(value == 0 ? 0x3f00 : 0x3f10 + spritesPallet.getSelectionModel().getSelectedItem()*4 + value);
+					}
+					writer.setArgb(((sprite % 16) * 8) + bit, ((sprite / 16) * 8) + line, RicohPPU.palletToRGB(color));
+				}
+			}
+		}
+		
+		logger.info("Sprites generated");
+	}
 
 	@FXML protected void initialize() {
 		LogView logView = new LogView(logger);
@@ -131,6 +159,10 @@ public class Main extends Application {
 				}
 				return new SimpleStringProperty("Unknown");
 		}});
+
+		spritesPallet.setItems(FXCollections.observableArrayList(-1, 0, 1, 2, 3));
+		spritesPallet.getSelectionModel().select(0);
+		spritesPallet.setOnAction(e -> generateSprites());
 		
 		choiceLevels.setItems(FXCollections.observableArrayList(Level.values()));
 		choiceLevels.getSelectionModel().select(Level.INFO);
@@ -175,9 +207,11 @@ public class Main extends Application {
 				ppu = new RicohPPU(log, emulationCanvas, game);
 				cpu = new RicohCPU(log, game, ppu, apu);
 				
-				apu.start();
-				ppu.start();
-				cpu.start();
+				generateSprites();
+				
+//				apu.start();
+//				ppu.start();
+//				cpu.start();
 				
 				logger.info("System Created");
 

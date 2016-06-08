@@ -1,6 +1,8 @@
 package co.swft.nes.java;
 
 import java.awt.GraphicsEnvironment;
+import java.util.ArrayList;
+import java.util.List;
 
 import com.stackoverflow.jewelsea.Log;
 import com.stackoverflow.jewelsea.Logger;
@@ -52,6 +54,17 @@ public class RicohPPU extends Controlable {
     private Canvas canvas;
     private int frameRate        = 60;
 
+
+    public byte[] readMemoryMapRange(int location, int length) {
+    	return readMemoryMapRange((short) location, (short) length);
+    }
+    
+    public byte[] readMemoryMapRange(short location, short length) {
+    	byte[] bytes = new byte[length];
+    	for(short i = 0; i < length; i++) bytes[i] = readMemoryMap(location + i);
+    	return bytes;
+    }
+    
 	/**
 	 * Get a byte from the memory map.
 	 * @param location Absolute location of the byte we want to find.
