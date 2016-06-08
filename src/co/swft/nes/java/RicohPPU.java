@@ -1,8 +1,6 @@
 package co.swft.nes.java;
 
 import java.awt.GraphicsEnvironment;
-import java.util.ArrayList;
-import java.util.List;
 
 import com.stackoverflow.jewelsea.Log;
 import com.stackoverflow.jewelsea.Logger;

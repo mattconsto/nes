@@ -8,15 +8,12 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.lang.reflect.Field;
 import java.nio.file.Files;
-import java.util.HashMap;
-import java.util.Map;
 
 import co.swft.util.TableBuilder;
 
 public abstract class CartridgeGame {
 	public byte[] code;
 	public byte[] save;
-	public HashMap<String, Object> properties = new HashMap<String, Object>();
 	
 	public class InvalidFileException extends Exception {
         private static final long serialVersionUID = 3340080282731893878L;
@@ -47,11 +44,7 @@ public abstract class CartridgeGame {
 	
 	public String toString() {
 		TableBuilder tableBuilder = new TableBuilder();
-		
-//		for(Map.Entry<String, Object> entry : properties.entrySet())
-//            tableBuilder.addRow(entry.getKey(), entry.getValue().toString());
-		
-		// TODO: Crappy reflective way. Remove
+
 		for(Field field : this.getClass().getDeclaredFields()) {
 			try {
 	            tableBuilder.addRow(field.getName(), field.get(this));

@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
+<?import javafx.scene.*?>
 <?import javafx.geometry.*?>
 <?import javafx.scene.canvas.*?>
 <?import javafx.scene.image.*?>
@@ -8,7 +9,7 @@
 <?import java.lang.*?>
 <?import javafx.scene.layout.*?>
 
-<BorderPane prefHeight="400.0" prefWidth="600.0" xmlns="http://javafx.com/javafx/8" xmlns:fx="http://javafx.com/fxml/1" fx:controller="Main">
+<BorderPane prefHeight="400.0" prefWidth="600.0" xmlns="http://javafx.com/javafx/8" xmlns:fx="http://javafx.com/fxml/1" fx:controller="co.swft.nes.java.Controller">
 	<top>
 		<MenuBar BorderPane.alignment="CENTER">
    <menus>
@@ -28,6 +29,7 @@
    			</Menu>
    			<Menu text="Help">
       <items>
+      				<MenuItem disable="true" onAction="#helpAbout" text="Settings" />
       				<MenuItem onAction="#helpAbout" text="About" />
       </items>
    			</Menu>
@@ -39,10 +41,13 @@
    <tabs>
    			<Tab text="Emulation">
       <content>
-      				<BorderPane style="-fx-background-color: #000000;">
+      				<BorderPane fx:id="emulationContainer" style="-fx-background-color: #000000;">
       					<center>
-      						<Canvas fx:id="emulationCanvas" height="256.0" width="240.0" BorderPane.alignment="CENTER" />
+      						<Canvas fx:id="emulationCanvas" height="264.0" width="240.0" BorderPane.alignment="CENTER" />
       					</center>
+                     <cursor>
+                        <Cursor fx:constant="NONE" />
+                     </cursor>
       				</BorderPane>
       </content>
    			</Tab>
@@ -50,29 +55,98 @@
       <content>
       				<TableView fx:id="infoTable">
       					<columns>
-      						<TableColumn fx:id="infoProperty" prefWidth="75.0" text="Property" />
-      						<TableColumn fx:id="infoDescription" prefWidth="525.0" text="Description" />
+      						<TableColumn fx:id="infoProperty" maxWidth="200.0" minWidth="200.0" prefWidth="200.0" text="Property" />
+      						<TableColumn fx:id="infoDescription" prefWidth="200.0" text="Description" />
       					</columns>
+                     <columnResizePolicy>
+                        <TableView fx:constant="CONSTRAINED_RESIZE_POLICY" />
+                     </columnResizePolicy>
       				</TableView>
       </content>
    			</Tab>
    			<Tab text="Debugger">
                <content>
-                  <ListView fx:id="debuggerList" style="-fx-font-family: monospace; -fx-font-size: 11px;" />
+                  <SplitPane dividerPositions="0.425">
+                     <items>
+                        <ListView fx:id="debuggerList" style="-fx-font-family: monospace; -fx-font-size: 11px;" />
+                        <VBox>
+                           <children>
+                              <HBox spacing="5.0">
+                                 <children>
+                                    <ToggleButton disable="true" maxWidth="1.7976931348623157E308" mnemonicParsing="false" selected="true" text="Run" HBox.hgrow="ALWAYS" />
+                                    <Button disable="true" maxWidth="1.7976931348623157E308" mnemonicParsing="false" text="Into" HBox.hgrow="ALWAYS" />
+                                    <Button disable="true" maxWidth="1.7976931348623157E308" mnemonicParsing="false" text="Out" HBox.hgrow="ALWAYS" />
+                                    <Button disable="true" maxWidth="1.7976931348623157E308" mnemonicParsing="false" text="Over" HBox.hgrow="ALWAYS" />
+                                    <Button disable="true" maxWidth="1.7976931348623157E308" mnemonicParsing="false" text="Line" HBox.hgrow="ALWAYS" />
+                                 </children>
+                                 <padding>
+                                    <Insets bottom="5.0" left="5.0" right="5.0" top="5.0" />
+                                 </padding>
+                              </HBox>
+                              <Separator prefWidth="200.0" />
+                              <HBox spacing="5.0">
+                                 <padding>
+                                    <Insets bottom="5.0" left="5.0" right="5.0" top="5.0" />
+                                 </padding>
+                                 <children>
+                                    <Text strokeType="OUTSIDE" strokeWidth="0.0" text="PC">
+                                       <HBox.margin>
+                                          <Insets bottom="5.0" left="5.0" right="5.0" top="5.0" />
+                                       </HBox.margin>
+                                    </Text>
+                                    <TextField disable="true" maxWidth="1000.0" text="0" HBox.hgrow="ALWAYS" />
+                                    <Text strokeType="OUTSIDE" strokeWidth="0.0" text="A">
+                                       <HBox.margin>
+                                          <Insets bottom="5.0" left="5.0" right="5.0" top="5.0" />
+                                       </HBox.margin>
+                                    </Text>
+                                    <TextField disable="true" maxWidth="1000.0" text="0" HBox.hgrow="ALWAYS" />
+                                    <Text strokeType="OUTSIDE" strokeWidth="0.0" text="X">
+                                       <HBox.margin>
+                                          <Insets bottom="5.0" left="5.0" right="5.0" top="5.0" />
+                                       </HBox.margin>
+                                    </Text>
+                                    <TextField disable="true" maxWidth="1000.0" text="0" HBox.hgrow="ALWAYS" />
+                                    <Text strokeType="OUTSIDE" strokeWidth="0.0" text="Y">
+                                       <HBox.margin>
+                                          <Insets bottom="5.0" left="5.0" right="5.0" top="5.0" />
+                                       </HBox.margin>
+                                    </Text>
+                                    <TextField disable="true" maxWidth="1000.0" />
+                                 </children>
+                              </HBox>
+                              <Separator prefWidth="200.0" />
+                              <HBox spacing="5.0">
+                                 <padding>
+                                    <Insets bottom="5.0" left="5.0" right="5.0" top="5.0" />
+                                 </padding>
+                                 <children>
+                                    <CheckBox disable="true" maxWidth="1000.0" mnemonicParsing="false" text="N" HBox.hgrow="ALWAYS" />
+                                    <CheckBox disable="true" maxWidth="1000.0" mnemonicParsing="false" text="V" HBox.hgrow="ALWAYS" />
+                                    <CheckBox disable="true" maxWidth="1000.0" mnemonicParsing="false" text="U" HBox.hgrow="ALWAYS" />
+                                    <CheckBox disable="true" maxWidth="1000.0" mnemonicParsing="false" text="B" HBox.hgrow="ALWAYS" />
+                                    <CheckBox disable="true" maxWidth="1000.0" mnemonicParsing="false" text="D" HBox.hgrow="ALWAYS" />
+                                    <CheckBox disable="true" maxWidth="1000.0" mnemonicParsing="false" text="I" HBox.hgrow="ALWAYS" />
+                                    <CheckBox disable="true" maxWidth="1000.0" mnemonicParsing="false" text="Z" HBox.hgrow="ALWAYS" />
+                                    <CheckBox disable="true" maxWidth="1000.0" mnemonicParsing="false" text="C" HBox.hgrow="ALWAYS" />
+                                 </children>
+                              </HBox>
+                              <TableView>
+                                <columns>
+                                  <TableColumn maxWidth="100.0" minWidth="100.0" prefWidth="100.0" resizable="false" text="Register" />
+                                  <TableColumn prefWidth="100.0" text="Value" />
+                                </columns>
+                                 <columnResizePolicy>
+                                    <TableView fx:constant="CONSTRAINED_RESIZE_POLICY" />
+                                 </columnResizePolicy>
+                              </TableView>
+                           </children>
+                        </VBox>
+                     </items>
+                  </SplitPane>
                </content>
    			</Tab>
-   			<Tab text="Registers">
-      <content>
-      				<TableView fx:id="registerTable">
-      					<columns>
-      						<TableColumn fx:id="registersRegister" prefWidth="75.0" text="Register" />
-      						<TableColumn fx:id="registersValue" prefWidth="525.0" text="Value" />
-      					</columns>
-      				</TableView>
-      </content>
-   			</Tab>
-   			<Tab text="RAM" />
-   			<Tab text="Sprites">
+   			<Tab text="Patterns">
       <content>
       				<VBox>
          <children>
@@ -93,16 +167,18 @@
          							</HBox>
          						</left>
          					</BorderPane>
-         					<BorderPane style="-fx-background-color: #000000;" VBox.vgrow="ALWAYS">
+         					<BorderPane fx:id="spritesContainer" style="-fx-background-color: #000000;" VBox.vgrow="ALWAYS">
          						<center>
-         							<Canvas fx:id="spritesCanvas" height="256.0" width="240.0" BorderPane.alignment="CENTER" />
+         							<Canvas fx:id="spritesCanvas" height="128.0" width="264.0" BorderPane.alignment="CENTER" />
          						</center>
+                           <cursor>
+                              <Cursor fx:constant="MOVE" />
+                           </cursor>
          					</BorderPane>
          </children>
       				</VBox>
       </content>
    			</Tab>
-   			<Tab text="Audio" />
    			<Tab text="Log">
       <content>
       				<VBox prefHeight="200.0" prefWidth="100.0">

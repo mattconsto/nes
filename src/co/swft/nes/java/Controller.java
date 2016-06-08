@@ -1,47 +1,26 @@
+package co.swft.nes.java;
 import java.io.File;
 import java.lang.reflect.Field;
-import java.util.Arrays;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 
-import com.stackoverflow.jewelsea.Level;
-import com.stackoverflow.jewelsea.Log;
-import com.stackoverflow.jewelsea.LogView;
-import com.stackoverflow.jewelsea.Logger;
-import com.sun.corba.se.spi.orbutil.fsm.Action;
+import com.stackoverflow.jewelsea.*;
 
-import co.swft.nes.java.NESCartridge;
-import co.swft.nes.java.RicohAPU;
-import co.swft.nes.java.RicohCPU;
-import co.swft.nes.java.RicohPPU;
 import javafx.application.Application;
 import javafx.application.Platform;
-import javafx.beans.property.SimpleIntegerProperty;
-import javafx.beans.property.SimpleStringProperty;
+import javafx.beans.property.*;
 import javafx.beans.value.ObservableValue;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;
-import javafx.scene.CacheHint;
 import javafx.scene.Parent;
 import javafx.scene.Scene;
 import javafx.scene.canvas.Canvas;
-import javafx.scene.control.Alert;
-import javafx.scene.control.ChoiceBox;
-import javafx.scene.control.ComboBox;
-import javafx.scene.control.ListView;
-import javafx.scene.control.TableColumn;
-import javafx.scene.control.TableView;
-import javafx.scene.control.TableColumn.CellDataFeatures;
-import javafx.scene.control.ToggleButton;
+import javafx.scene.control.*;
 import javafx.scene.image.PixelWriter;
-import javafx.scene.control.Alert.AlertType;
 import javafx.scene.layout.BorderPane;
-import javafx.scene.paint.Color;
-import javafx.scene.shape.Shape;
 import javafx.stage.FileChooser;
 import javafx.stage.Stage;
 import javafx.util.Callback;
@@ -67,7 +46,7 @@ import javafx.util.Callback;
  * 
  * @author Matthew Consterdine
  */
-public class Main extends Application {
+public class Controller extends Application {
 	private Stage stage;
 	private Log log = new Log();
 	private Logger logger = new Logger(log, "App");
@@ -78,6 +57,7 @@ public class Main extends Application {
 	private RicohPPU ppu;
 	private RicohCPU cpu;
 
+	@FXML private BorderPane emulationContainer;
 	@FXML private Canvas emulationCanvas;
 
 	@FXML private TableView<Field> infoTable;
@@ -91,6 +71,7 @@ public class Main extends Application {
 	@FXML private TableColumn<ObservableList<String>, String> registerValue;
 	
 	@FXML private ComboBox<Integer> spritesPallet;
+	@FXML private BorderPane spritesContainer;
 	@FXML private Canvas spritesCanvas;
 
 	@FXML private ChoiceBox<Level> choiceLevels;
@@ -121,10 +102,6 @@ public class Main extends Application {
 	private Map<Integer, Integer> instructionMap = new HashMap<>();
 	
 	private int[] instructionLength = {1, 2, 1, 1, 1, 2, 2, 1, 1, 2, 1, 1, 1, 3, 3, 1, 2, 2, 1, 1, 1, 2, 2, 1, 1, 3, 1, 1, 1, 3, 3, 1, 3, 2, 1, 1, 2, 2, 2, 1, 1, 2, 1, 1, 3, 3, 3, 1, 2, 2, 1, 1, 1, 2, 2, 1, 1, 3, 1, 1, 1, 3, 3, 1, 1, 2, 1, 1, 1, 2, 2, 1, 1, 2, 1, 1, 3, 3, 3, 1, 2, 2, 1, 1, 1, 2, 2, 1, 1, 3, 1, 1, 1, 3, 3, 1, 1, 2, 1, 1, 1, 2, 2, 1, 1, 2, 1, 1, 3, 3, 3, 1, 2, 2, 1, 1, 1, 2, 2, 1, 1, 3, 1, 1, 1, 3, 3, 1, 1, 2, 1, 1, 2, 2, 2, 1, 1, 1, 1, 1, 3, 3, 3, 1, 2, 2, 1, 1, 2, 2, 1, 1, 2, 3, 1, 1, 1, 3, 1, 1, 2, 2, 2, 1, 2, 2, 2, 1, 1, 2, 1, 1, 3, 3, 3, 1, 2, 2, 1, 1, 2, 2, 2, 1, 1, 3, 1, 1, 3, 3, 3, 1, 2, 2, 1, 1, 2, 2, 2, 1, 1, 2, 1, 1, 3, 3, 3, 1, 2, 2, 1, 1, 1, 2, 2, 1, 1, 3, 1, 1, 1, 3, 3, 1, 2, 2, 1, 1, 2, 2, 2, 1, 1, 2, 1, 1, 3, 3, 3, 1, 2, 2, 1, 1, 1, 2, 2, 1, 1, 3, 1, 1, 1, 3, 3, 1, 1};
-	
-	public static void main(String[] args) {
-		Application.launch(args);
-	}
 
 	@Override public void start(Stage stage) throws Exception {
 		this.stage = stage;
@@ -132,17 +109,19 @@ public class Main extends Application {
 		Parent root = FXMLLoader.load(getClass().getResource("/co/swft/nes/ui/emulation.fxml"));
 
 		Scene scene = new Scene(root, 800, 600);
+		
 		stage.setTitle("Emulation");
 		stage.setScene(scene);
-
 		stage.setOnCloseRequest(e -> fileClose(new ActionEvent()));
-
 		stage.show();
 	}
 	
 	private void generateSprites() {
+		if(ppu == null) return;
+		
 		PixelWriter writer = spritesCanvas.getGraphicsContext2D().getPixelWriter();
 		byte[] defaultPallet = new byte[] {0x3f, 0x06, 0x02, 0x30};
+		int pallet = spritesPallet.getSelectionModel().getSelectedItem();
 		
 		for(int sprite = 0; sprite < 512; sprite++) {
 			for(int line = 0; line < 8; line++) {
@@ -152,17 +131,17 @@ public class Main extends Application {
 				for(int bit = 0; bit < 8; bit++) {
 					int value = ((plane1 >> (7 - bit)) & 1) | ((plane2 >> (7 - bit)) & 1) * 2;
 					byte color;
-					if(spritesPallet.getSelectionModel().getSelectedItem() == -1) {
+					if(pallet == -1) {
 						color = defaultPallet[value];
 					} else {
-						color = ppu.readMemoryMap(value == 0 ? 0x3f00 : 0x3f10 + spritesPallet.getSelectionModel().getSelectedItem()*4 + value);
+						color = ppu.readMemoryMap(value == 0 ? 0x3f00 : 0x3f10 + pallet*4 + value);
 					}
-					writer.setArgb(((sprite % 16) * 8) + bit, ((sprite / 16) * 8) + line, RicohPPU.palletToRGB(color));
+					writer.setArgb(((sprite % 16) * 8) + bit + (sprite / 256) * 136, (((sprite % 256) / 16) * 8) + line, RicohPPU.palletToRGB(color));
 				}
 			}
 		}
 		
-		logger.info("Sprites generated");
+		logger.info("Sprites generated using pallet " + pallet);
 	}
 	
 	private void disassemble() {
@@ -180,10 +159,16 @@ public class Main extends Application {
 	@FXML protected void initialize() {
 		LogView logView = new LogView(logger);
 		
+		emulationContainer.setOnScroll(e -> {
+			emulationCanvas.setScaleX(Math.max(0.25, Math.min(64, emulationCanvas.getScaleX() + e.getDeltaY() / 100)));
+			emulationCanvas.setScaleY(Math.max(0.25, Math.min(64, emulationCanvas.getScaleY() + e.getDeltaY() / 100)));
+		});
+		
 		infoProperty.setCellValueFactory(new Callback<TableColumn.CellDataFeatures<Field, String>, ObservableValue<String>>() {
 			@Override public ObservableValue<String> call(TableColumn.CellDataFeatures<Field, String> p) {
 				return new SimpleStringProperty(p.getValue().getName().replaceAll("_", " "));
 		}});
+		infoProperty.setResizable(false);
 
 		infoDescription.setCellValueFactory(new Callback<TableColumn.CellDataFeatures<Field, String>, ObservableValue<String>>() {
 			@Override public ObservableValue<String> call(TableColumn.CellDataFeatures<Field, String> p) {
@@ -203,6 +188,24 @@ public class Main extends Application {
 		spritesPallet.setItems(FXCollections.observableArrayList(-1, 0, 1, 2, 3));
 		spritesPallet.getSelectionModel().select(0);
 		spritesPallet.setOnAction(e -> generateSprites());
+		
+		spritesContainer.setOnScroll(e -> {
+			spritesCanvas.setScaleX(Math.max(0.25, Math.min(64, spritesCanvas.getScaleX() + e.getDeltaY() / 100)));
+			spritesCanvas.setScaleY(Math.max(0.25, Math.min(64, spritesCanvas.getScaleY() + e.getDeltaY() / 100)));
+		});
+
+		DoubleProperty startX = new SimpleDoubleProperty(), startY = new SimpleDoubleProperty();
+		DoubleProperty mouseX = new SimpleDoubleProperty(), mouseY = new SimpleDoubleProperty();
+		spritesContainer.setOnMousePressed(e -> {
+			startX.set(spritesCanvas.getTranslateX());
+			startY.set(spritesCanvas.getTranslateY());
+			mouseX.set(e.getX());
+			mouseY.set(e.getY());
+		});
+		spritesContainer.setOnMouseDragged(e -> {
+			spritesCanvas.setTranslateX(startX.get() + (e.getX() - mouseX.get()));
+			spritesCanvas.setTranslateY(startY.get() + (e.getY() - mouseY.get()));
+		});
 		
 		choiceLevels.setItems(FXCollections.observableArrayList(Level.values()));
 		choiceLevels.getSelectionModel().select(Level.INFO);
@@ -232,35 +235,35 @@ public class Main extends Application {
 
 //		File selected = new File("tools/hello/hello.nes");
 
-		if (selected != null) {
-			logger.info("%s selected", selected);
+		if (selected != null) openROM(selected);
+	}
+	
+	private void openROM(File file) {
+		logger.info("%s selected", file);
 
-			try {
-				game = new NESCartridge(selected);
+		try {
+			game = new NESCartridge(file);
 
-				infoTable.itemsProperty().get().clear();
-				infoTable.itemsProperty().get().addAll(FXCollections.observableArrayList(game.getClass().getDeclaredFields()));
-				
-				logger.info("Cartridge Loaded");
+			infoTable.itemsProperty().get().clear();
+			infoTable.itemsProperty().get().addAll(FXCollections.observableArrayList(game.getClass().getDeclaredFields()));
+			
+			logger.info("Cartridge Loaded");
 
-				apu = new RicohAPU(log);
-				ppu = new RicohPPU(log, emulationCanvas, game);
-				cpu = new RicohCPU(log, game, ppu, apu);
-				
-				disassemble();
-				generateSprites();
-				
-//				apu.start();
-//				ppu.start();
-//				cpu.start();
-				
-				logger.info("System Created");
-
-				System.out.println(game);
-			} catch (Exception e) {
-				logger.warn("Failed to load Cartridge");
-				e.printStackTrace();
-			}
+			apu = new RicohAPU(log);
+			ppu = new RicohPPU(log, emulationCanvas, game);
+			cpu = new RicohCPU(log, game, ppu, apu);
+			
+			disassemble();
+			generateSprites();
+			
+//			apu.start();
+//			ppu.start();
+//			cpu.start();
+			
+			logger.info("System Created");
+		} catch (Exception e) {
+			logger.warn("Failed to load Cartridge");
+			e.printStackTrace();
 		}
 	}
 
@@ -277,6 +280,10 @@ public class Main extends Application {
 
 	@FXML protected void emulationToggle(ActionEvent event) {
 		logger.info("Toggling Emulation");
+		
+		if(apu != null && !apu.isAlive()) apu.start();
+		if(ppu != null && !ppu.isAlive()) ppu.start();
+		if(cpu != null && !cpu.isAlive()) cpu.start();
 		
 		if(apu != null) apu.toggleMonitor();
 		if(ppu != null) ppu.toggleMonitor();
