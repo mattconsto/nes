@@ -13,7 +13,7 @@ import co.swft.nes.abstracts.CartridgeGame;
  * @author Matthew Consterdine
  */
 public class NESCartridge extends CartridgeGame {
-	public final File       file;
+	public final File       File;
 	public final int        Program_ROM_Pages;   // 1 page = 16,384 bytes
 	public final int        Character_ROM_Pages; // 1 page = 8,192 bytes
 	public final boolean    Four_Screen_Mode;    // When set mirroring has no effect
@@ -39,7 +39,7 @@ public class NESCartridge extends CartridgeGame {
 	public NESCartridge(File file) throws IOException, InvalidFileException {
 		super(file);
 		
-		this.file = file;
+		this.File = file;
 		
 		// Initialise the save
 		save = new byte[0x2000];
