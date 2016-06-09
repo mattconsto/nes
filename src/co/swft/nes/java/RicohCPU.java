@@ -89,35 +89,25 @@ public class RicohCPU extends Controlable {
 	 * Methods to retrieve bits from the status register. Calling them will return a boolean value
 	 * representing the selected bit from the status register.
 	 */
-	public boolean getCarryFlag()           {printFlags(); return BitTools.getBit(state.s, 0);}
-	public boolean getZeroFlag()            {printFlags(); return BitTools.getBit(state.s, 1);}
-	public boolean getInterruptFlag()       {printFlags(); return BitTools.getBit(state.s, 2);}
-	public boolean getDecimalFlag()         {printFlags(); return BitTools.getBit(state.s, 3);}
+	public boolean getCarryFlag()           {return BitTools.getBit(state.s, 0);}
+	public boolean getZeroFlag()            {return BitTools.getBit(state.s, 1);}
+	public boolean getInterruptFlag()       {return BitTools.getBit(state.s, 2);}
+	public boolean getDecimalFlag()         {return BitTools.getBit(state.s, 3);}
 	public boolean getBreakFlag()           {return BitTools.getBit(state.s, 4);}
-	public boolean getOverflowFlag()        {printFlags(); return BitTools.getBit(state.s, 5);}
-	public boolean getNegativeFlag()        {printFlags(); return BitTools.getBit(state.s, 6);}
-	
-	public void printFlags() {
-		logger.debug(
-			"Flags c=%d, z=%d, i=%d, d=%d, b=%d, o=%d, n=%d",
-			BitTools.getBit(state.s, 0)?1:0, BitTools.getBit(state.s, 1)?1:0,
-			BitTools.getBit(state.s, 2)?1:0, BitTools.getBit(state.s, 3)?1:0,
-			BitTools.getBit(state.s, 4)?1:0, BitTools.getBit(state.s, 5)?1:0,
-			BitTools.getBit(state.s, 6)?1:0
-		);
-	}
+	public boolean getOverflowFlag()        {return BitTools.getBit(state.s, 5);}
+	public boolean getNegativeFlag()        {return BitTools.getBit(state.s, 6);}
 	
 	/*
 	 * Methods to set bits in the status register. Calling them will set the selected bit in the 
 	 * status register to the value v.
 	 */
-	public void setCarryFlag(boolean v)     {state.s = BitTools.setBit(state.s, 0, v); printFlags();}
-	public void setZeroFlag(boolean v)      {state.s = BitTools.setBit(state.s, 1, v); printFlags();}
-	public void setInterruptFlag(boolean v) {state.s = BitTools.setBit(state.s, 2, v); printFlags();}
-	public void setDecimalFlag(boolean v)   {state.s = BitTools.setBit(state.s, 3, v); printFlags();}
-	public void setBreakFlag(boolean v)     {state.s = BitTools.setBit(state.s, 4, v); printFlags();}
-	public void setOverflowFlag(boolean v)  {state.s = BitTools.setBit(state.s, 5, v); printFlags();}
-	public void setNegativeFlag(boolean v)  {state.s = BitTools.setBit(state.s, 6, v); printFlags();}
+	public void setCarryFlag(boolean v)     {state.s = BitTools.setBit(state.s, 0, v);}
+	public void setZeroFlag(boolean v)      {state.s = BitTools.setBit(state.s, 1, v);}
+	public void setInterruptFlag(boolean v) {state.s = BitTools.setBit(state.s, 2, v);}
+	public void setDecimalFlag(boolean v)   {state.s = BitTools.setBit(state.s, 3, v);}
+	public void setBreakFlag(boolean v)     {state.s = BitTools.setBit(state.s, 4, v);}
+	public void setOverflowFlag(boolean v)  {state.s = BitTools.setBit(state.s, 5, v);}
+	public void setNegativeFlag(boolean v)  {state.s = BitTools.setBit(state.s, 6, v);}
 	
 	/*
 	 * Two methods that allow you too simply give them the byte, and they will calculate the flag
@@ -262,7 +252,7 @@ public class RicohCPU extends Controlable {
 				// Sound (0x4015) - Toggle channels
 				// Gamepad (0x4016-0x4017)
 				default:
-					System.out.format("!!! [APU] Sound not implemented\n");
+					logger.warn("Sound not implemented");
 			}
 		} else if(l < 0x6000) {
 			// Cartridge Expansion ROM
@@ -617,7 +607,7 @@ public class RicohCPU extends Controlable {
 			// BCC - Branch if Carry Clear
 			case 0x90: {
 				if(!getCarryFlag()) {
-					logger.debug("Branched");
+					// logger.debug("Branched");
 					state.pc += readImmediate() + 1;
 				} else {
 					state.pc++;
@@ -627,7 +617,7 @@ public class RicohCPU extends Controlable {
 			// BCS - Branch if Carry Set
 			case 0xB0: {
 				if(getCarryFlag()) {
-					logger.debug("Branched");
+					// logger.debug("Branched");
 					state.pc += readImmediate() + 1;
 				} else {
 					state.pc++;
@@ -637,7 +627,7 @@ public class RicohCPU extends Controlable {
 			// BEQ - Branch if Equal
 			case 0xF0: {
 				if(getZeroFlag()) {
-					logger.debug("Branched");
+					// logger.debug("Branched");
 					state.pc += readImmediate() + 1;
 				} else {
 					state.pc++;
@@ -662,7 +652,7 @@ public class RicohCPU extends Controlable {
 			// BMI - Branch if Minus
 			case 0x30: {
 				if(getNegativeFlag()) {
-					logger.debug("Branched");
+					// logger.debug("Branched");
 					state.pc += readImmediate() + 1;
 				} else {
 					state.pc++;
@@ -672,7 +662,7 @@ public class RicohCPU extends Controlable {
 			// BNE - Branch if Not Equal
 			case 0xD0: {
 				if(!getZeroFlag()) {
-					logger.debug("Branched");
+					// logger.debug("Branched");
 					state.pc += readImmediate() + 1;
 				} else {
 					state.pc++;
@@ -682,7 +672,7 @@ public class RicohCPU extends Controlable {
 			// BPL - Branch if Positive
 			case 0x10: {
 				if(!getNegativeFlag()) {
-					logger.debug("Branched");
+					// logger.debug("Branched");
 					state.pc += readImmediate() + 1;
 				} else {
 					state.pc++;
@@ -702,7 +692,7 @@ public class RicohCPU extends Controlable {
 			// BVC - Branch if Overflow Clear
 			case 0x50: {
 				if(!getOverflowFlag()) {
-					logger.debug("Branched");
+					// logger.debug("Branched");
 					state.pc += readImmediate() + 1;
 				} else {
 					state.pc++;
@@ -712,7 +702,7 @@ public class RicohCPU extends Controlable {
 			// BVS - Branch if Overflow Set
 			case 0x70: {
 				if(getOverflowFlag()) {
-					logger.debug("Branched");
+					// logger.debug("Branched");
 					state.pc += readImmediate() + 1;
 				} else {
 					state.pc++;

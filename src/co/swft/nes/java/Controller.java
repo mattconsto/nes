@@ -1,4 +1,5 @@
 package co.swft.nes.java;
+
 import java.io.File;
 import java.lang.reflect.Field;
 import java.util.HashMap;
@@ -11,7 +12,6 @@ import javafx.application.Platform;
 import javafx.beans.property.*;
 import javafx.beans.value.ObservableValue;
 import javafx.collections.FXCollections;
-import javafx.collections.ObservableList;
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;
@@ -65,10 +65,49 @@ public class Controller extends Application {
 	@FXML private TableColumn<Field, String> infoDescription;
 
 	@FXML private ListView<String> debuggerList;
-
-	@FXML private TableView<ObservableList<String>> registerTable;
-	@FXML private TableColumn<ObservableList<String>, String> registerRegister;
-	@FXML private TableColumn<ObservableList<String>, String> registerValue;
+	@FXML private Label debuggerStatus;
+	@FXML private ToggleButton debuggerControlRun;
+	@FXML private Button debuggerControlInto;
+	@FXML private Button debuggerControlOut;
+	@FXML private Button debuggerControlOver;
+	@FXML private Button debuggerControlLine;
+	@FXML private TextField debuggerCPUREgisterPC;
+	@FXML private TextField debuggerCPUREgisterA;
+	@FXML private TextField debuggerCPUREgisterX;
+	@FXML private TextField debuggerCPUREgisterY;
+	@FXML private CheckBox debuggerCPUStatusN;
+	@FXML private CheckBox debuggerCPUStatusV;
+	@FXML private CheckBox debuggerCPUStatusU;
+	@FXML private CheckBox debuggerCPUStatusB;
+	@FXML private CheckBox debuggerCPUStatusD;
+	@FXML private CheckBox debuggerCPUStatusI;
+	@FXML private CheckBox debuggerCPUStatusZ;
+	@FXML private CheckBox debuggerCPUStatusC;
+	@FXML private TextField debuggerCPUStack;
+	@FXML private CheckBox debuggerPPUControlV;
+	@FXML private CheckBox debuggerPPUControlP;
+	@FXML private CheckBox debuggerPPUControlH;
+	@FXML private CheckBox debuggerPPUControlB;
+	@FXML private CheckBox debuggerPPUControlS;
+	@FXML private CheckBox debuggerPPUControlI;
+	@FXML private TextField debuggerPPUControlN;
+	@FXML private CheckBox debuggerPPUMaskB;
+	@FXML private CheckBox debuggerPPUMaskG;
+	@FXML private CheckBox debuggerPPUMaskR;
+	@FXML private CheckBox debuggerPPUMasks;
+	@FXML private CheckBox debuggerPPUMaskb;
+	@FXML private CheckBox debuggerPPUMaskM;
+	@FXML private CheckBox debuggerPPUMaskm;
+	@FXML private CheckBox debuggerPPUMaskg;
+	@FXML private CheckBox debuggerPPUStatusV;
+	@FXML private CheckBox debuggerPPUStatusS;
+	@FXML private CheckBox debuggerPPUStatusO;
+	@FXML private TextField debuggerPPUPPUScroll;
+	@FXML private TextField debuggerPPUPPUAddress;
+	@FXML private TextField debuggerPPUPPUData;
+	@FXML private TextField debuggerPPUOAMDMA;
+	@FXML private TextField debuggerPPUOAMAddress;
+	@FXML private TextField debuggerPPUOAMData;
 	
 	@FXML private ComboBox<Integer> spritesPallet;
 	@FXML private BorderPane spritesContainer;
