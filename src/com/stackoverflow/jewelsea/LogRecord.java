@@ -30,4 +30,9 @@ public class LogRecord {
 	public String getMessage() {
 		return message;
 	}
+	
+	@Override
+	public String toString() {
+		return String.format("%tF %<tT\t%s\t%s\t%s", timestamp, level.toString(), context, message);
+	}
 }

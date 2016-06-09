@@ -66,500 +66,533 @@
    			</Tab>
    			<Tab text="Debugger">
                <content>
-                  <SplitPane dividerPositions="0.14907407407407408">
+                  <SplitPane dividerPositions="0.5351851851851852">
                      <items>
                         <ListView fx:id="debuggerList" style="-fx-font-family: monospace; -fx-font-size: 11px;" />
-                        <VBox>
-                           <children>
-                              <HBox spacing="5.0">
+                        <ScrollPane fitToWidth="true" hbarPolicy="NEVER" minWidth="430.0">
+                           <content>
+                              <VBox>
                                  <children>
-                                    <Label fx:id="debuggerStatus" text="Emulation is currently Halted" />
-                                 </children>
-                                 <padding>
-                                    <Insets bottom="5.0" left="5.0" right="5.0" top="5.0" />
-                                 </padding>
-                              </HBox>
-                              <Separator prefWidth="200.0" />
-                              <HBox spacing="5.0">
-                                 <children>
-                                    <ToggleButton fx:id="debuggerControlRun" maxWidth="1.7976931348623157E308" mnemonicParsing="false" selected="true" text="Run" HBox.hgrow="ALWAYS">
-                                       <tooltip>
-                                          <Tooltip text="Toggle Running" />
-                                       </tooltip></ToggleButton>
-                                    <Button fx:id="debuggerControlInto" maxWidth="1.7976931348623157E308" mnemonicParsing="false" text="Into" HBox.hgrow="ALWAYS">
-                                       <tooltip>
-                                          <Tooltip text="Step Into" />
-                                       </tooltip></Button>
-                                    <Button fx:id="debuggerControlOut" maxWidth="1.7976931348623157E308" mnemonicParsing="false" text="Out" HBox.hgrow="ALWAYS">
-                                       <tooltip>
-                                          <Tooltip text="Step Out" />
-                                       </tooltip></Button>
-                                    <Button fx:id="debuggerControlOver" maxWidth="1.7976931348623157E308" mnemonicParsing="false" text="Over" HBox.hgrow="ALWAYS">
-                                       <tooltip>
-                                          <Tooltip text="Step Over" />
-                                       </tooltip></Button>
-                                    <Button fx:id="debuggerControlLine" maxWidth="1.7976931348623157E308" mnemonicParsing="false" text="Line" HBox.hgrow="ALWAYS">
-                                       <tooltip>
-                                          <Tooltip text="Step Line" />
-                                       </tooltip></Button>
-                                 </children>
-                                 <padding>
-                                    <Insets bottom="5.0" left="5.0" right="5.0" top="5.0" />
-                                 </padding>
-                              </HBox>
-                              <TitledPane prefWidth="200.0" text="CPU">
-                                 <content>
-                                    <VBox>
+                                    <HBox spacing="5.0">
                                        <children>
-                                          <HBox>
-                                             <children>
-                                                <Label alignment="CENTER" minWidth="65.0" prefWidth="65.0" text="Register">
-                                                   <HBox.margin>
-                                                      <Insets />
-                                                   </HBox.margin>
-                                                   <padding>
-                                                      <Insets bottom="10.0" left="5.0" right="5.0" top="10.0" />
-                                                   </padding>
-                                                </Label>
-                                                <Separator orientation="VERTICAL" />
-                                                <HBox spacing="5.0">
-                                                   <padding>
-                                                      <Insets bottom="5.0" left="5.0" right="5.0" top="5.0" />
-                                                   </padding>
-                                                   <children>
-                                                      <Label minWidth="-Infinity" text="PC">
-                                                         <padding>
-                                                            <Insets bottom="5.0" right="5.0" top="5.0" />
-                                                         </padding>
-                                                         <tooltip>
-                                                            <Tooltip text="Program Counter" />
-                                                         </tooltip>
-                                                      </Label>
-                                                      <TextField fx:id="debuggerCPURegisterPC" maxWidth="1.7976931348623157E308" minHeight="31.0" minWidth="10.0" text="0" HBox.hgrow="ALWAYS">
-                                                         <HBox.margin>
-                                                            <Insets />
-                                                         </HBox.margin>
-                                                         <padding>
-                                                            <Insets bottom="5.0" left="5.0" right="5.0" top="5.0" />
-                                                         </padding>
-                                                      </TextField>
-                                                      <Label text="A">
-                                                         <padding>
-                                                            <Insets bottom="5.0" left="5.0" right="5.0" top="5.0" />
-                                                         </padding>
-                                                         <tooltip>
-                                                            <Tooltip text="Accumulator" />
-                                                         </tooltip>
-                                                      </Label>
-                                                      <TextField fx:id="debuggerCPURegisterA" maxWidth="1.7976931348623157E308" minHeight="31.0" minWidth="10.0" text="0" HBox.hgrow="ALWAYS">
-                                                         <HBox.margin>
-                                                            <Insets />
-                                                         </HBox.margin>
-                                                         <padding>
-                                                            <Insets bottom="5.0" left="5.0" right="5.0" top="5.0" />
-                                                         </padding>
-                                                      </TextField>
-                                                      <Label text="X">
-                                                         <padding>
-                                                            <Insets bottom="5.0" left="5.0" right="5.0" top="5.0" />
-                                                         </padding>
-                                                         <tooltip>
-                                                            <Tooltip text="X Register" />
-                                                         </tooltip>
-                                                      </Label>
-                                                      <TextField fx:id="debuggerCPURegisterX" maxWidth="1.7976931348623157E308" minHeight="31.0" minWidth="10.0" text="0" HBox.hgrow="ALWAYS">
-                                                         <HBox.margin>
-                                                            <Insets />
-                                                         </HBox.margin>
-                                                         <padding>
-                                                            <Insets bottom="5.0" left="5.0" right="5.0" top="5.0" />
-                                                         </padding>
-                                                      </TextField>
-                                                      <Label text="Y">
-                                                         <padding>
-                                                            <Insets bottom="5.0" left="5.0" right="5.0" top="5.0" />
-                                                         </padding>
-                                                         <tooltip>
-                                                            <Tooltip text="Y Register" />
-                                                         </tooltip>
-                                                      </Label>
-                                                      <TextField fx:id="debuggerCPURegisterY" maxWidth="1.7976931348623157E308" minHeight="31.0" minWidth="10.0" text="0" HBox.hgrow="ALWAYS">
-                                                         <HBox.margin>
-                                                            <Insets />
-                                                         </HBox.margin>
-                                                         <padding>
-                                                            <Insets bottom="5.0" left="5.0" right="5.0" top="5.0" />
-                                                         </padding>
-                                                      </TextField>
-                                                   </children>
-                                                </HBox>
-                                             </children>
-                                          </HBox>
-                                          <Separator prefWidth="200.0" />
-                                          <HBox>
-                                             <children>
-                                                <Label alignment="CENTER" minWidth="65.0" prefWidth="65.0" text="Status">
-                                                   <padding>
-                                                      <Insets bottom="10.0" left="5.0" right="5.0" top="10.0" />
-                                                   </padding>
-                                                   <HBox.margin>
-                                                      <Insets />
-                                                   </HBox.margin>
-                                                </Label>
-                                                <Separator orientation="VERTICAL" />
-                                                <HBox spacing="5.0" HBox.hgrow="ALWAYS">
-                                                   <padding>
-                                                      <Insets bottom="10.0" left="5.0" right="5.0" top="10.0" />
-                                                   </padding>
-                                                   <children>
-                                                      <CheckBox fx:id="debuggerCPUStatusN" maxWidth="1000.0" mnemonicParsing="false" text="N" HBox.hgrow="ALWAYS">
-                                                         <tooltip>
-                                                            <Tooltip text="Negative" />
-                                                         </tooltip>
-                                                      </CheckBox>
-                                                      <CheckBox fx:id="debuggerCPUStatusV" maxWidth="1000.0" mnemonicParsing="false" text="V" HBox.hgrow="ALWAYS">
-                                                         <tooltip>
-                                                            <Tooltip text="Overflow" />
-                                                         </tooltip>
-                                                      </CheckBox>
-                                                      <CheckBox fx:id="debuggerCPUStatusU" maxWidth="1000.0" mnemonicParsing="false" text="U" HBox.hgrow="ALWAYS">
-                                                         <tooltip>
-                                                            <Tooltip text="Unused" />
-                                                         </tooltip>
-                                                      </CheckBox>
-                                                      <CheckBox fx:id="debuggerCPUStatusB" maxWidth="1000.0" mnemonicParsing="false" text="B" HBox.hgrow="ALWAYS">
-                                                         <tooltip>
-                                                            <Tooltip text="Break" />
-                                                         </tooltip>
-                                                      </CheckBox>
-                                                      <CheckBox fx:id="debuggerCPUStatusD" maxWidth="1000.0" mnemonicParsing="false" text="D" HBox.hgrow="ALWAYS">
-                                                         <tooltip>
-                                                            <Tooltip text="Decimal" />
-                                                         </tooltip>
-                                                      </CheckBox>
-                                                      <CheckBox fx:id="debuggerCPUStatusI" maxWidth="1000.0" mnemonicParsing="false" text="I" HBox.hgrow="ALWAYS">
-                                                         <tooltip>
-                                                            <Tooltip text="Interrupt" />
-                                                         </tooltip>
-                                                      </CheckBox>
-                                                      <CheckBox fx:id="debuggerCPUStatusZ" maxWidth="1000.0" mnemonicParsing="false" text="Z" HBox.hgrow="ALWAYS">
-                                                         <tooltip>
-                                                            <Tooltip text="Zero" />
-                                                         </tooltip>
-                                                      </CheckBox>
-                                                      <CheckBox fx:id="debuggerCPUStatusC" maxWidth="1000.0" mnemonicParsing="false" text="C" HBox.hgrow="ALWAYS">
-                                                         <tooltip>
-                                                            <Tooltip text="Carry" />
-                                                         </tooltip>
-                                                      </CheckBox>
-                                                   </children>
-                                                </HBox>
-                                             </children>
-                                          </HBox>
-                                          <Separator prefWidth="200.0" />
-                                          <HBox>
-                                             <children>
-                                                <Label alignment="CENTER" minWidth="65.0" prefWidth="65.0" text="Stack">
-                                                   <padding>
-                                                      <Insets bottom="10.0" left="5.0" right="5.0" top="10.0" />
-                                                   </padding>
-                                                   <HBox.margin>
-                                                      <Insets />
-                                                   </HBox.margin>
-                                                </Label>
-                                                <Separator orientation="VERTICAL" />
-                                                <TextField fx:id="debuggerCPUStack" maxWidth="1.7976931348623157E308" minHeight="31.0" minWidth="10.0" HBox.hgrow="ALWAYS">
-                                                   <HBox.margin>
-                                                      <Insets bottom="5.0" left="5.0" right="5.0" top="5.0" />
-                                                   </HBox.margin></TextField>
-                                             </children>
-                                          </HBox>
+                                          <ToggleButton fx:id="debuggerEnable" mnemonicParsing="false" selected="true" text="Debug" />
+                                          <Label fx:id="debuggerStatus" alignment="CENTER" maxWidth="1.7976931348623157E308" text="Emulation is currently Halted" HBox.hgrow="ALWAYS">
+                                             <HBox.margin>
+                                                <Insets bottom="5.0" top="5.0" />
+                                             </HBox.margin>
+                                          </Label>
+                                          <Slider fx:id="debuggerDelay" majorTickUnit="100.0" max="1000.0" minorTickCount="1" prefHeight="31.0" prefWidth="200.0" showTickLabels="true" showTickMarks="true" value="20.0">
+                                             <padding>
+                                                <Insets top="7.0" />
+                                             </padding>
+                                          </Slider>
                                        </children>
                                        <padding>
-                                          <Insets top="5.0" />
+                                          <Insets bottom="5.0" left="5.0" right="5.0" top="5.0" />
                                        </padding>
-                                    </VBox>
-                                 </content>
-                              </TitledPane>
-                              <TitledPane animated="false" text="PPU">
-                                 <content>
-                                    <VBox>
+                                    </HBox>
+                                    <Separator prefWidth="200.0" />
+                                    <HBox spacing="5.0">
                                        <children>
-                                          <HBox>
-                                             <children>
-                                                <Label alignment="CENTER" minWidth="65.0" prefWidth="65.0" text="Control">
-                                                   <padding>
-                                                      <Insets bottom="10.0" left="5.0" right="5.0" top="10.0" />
-                                                   </padding>
-                                                </Label>
-                                                <Separator orientation="VERTICAL" />
-                                                <HBox spacing="5.0" HBox.hgrow="ALWAYS">
-                                                   <children>
-                                                      <CheckBox fx:id="debuggerPPUControlV" maxWidth="1.7976931348623157E308" mnemonicParsing="false" text="V" HBox.hgrow="ALWAYS">
-                                                         <HBox.margin>
-                                                            <Insets bottom="5.0" top="5.0" />
-                                                         </HBox.margin>
-                                                         <tooltip>
-                                                            <Tooltip text="NMI Enable" />
-                                                         </tooltip>
-                                                      </CheckBox>
-                                                      <CheckBox fx:id="debuggerPPUControlP" maxWidth="1.7976931348623157E308" mnemonicParsing="false" text="P" HBox.hgrow="ALWAYS">
-                                                         <HBox.margin>
-                                                            <Insets bottom="5.0" top="5.0" />
-                                                         </HBox.margin>
-                                                         <tooltip>
-                                                            <Tooltip text="PPU Masater/Slave" />
-                                                         </tooltip>
-                                                      </CheckBox>
-                                                      <CheckBox fx:id="debuggerPPUControlH" maxWidth="1.7976931348623157E308" mnemonicParsing="false" text="H" HBox.hgrow="ALWAYS">
-                                                         <HBox.margin>
-                                                            <Insets bottom="5.0" top="5.0" />
-                                                         </HBox.margin>
-                                                         <tooltip>
-                                                            <Tooltip text="Sprite Height" />
-                                                         </tooltip>
-                                                      </CheckBox>
-                                                      <CheckBox fx:id="debuggerPPUControlB" maxWidth="1.7976931348623157E308" mnemonicParsing="false" text="B" HBox.hgrow="ALWAYS">
-                                                         <HBox.margin>
-                                                            <Insets bottom="5.0" top="5.0" />
-                                                         </HBox.margin>
-                                                         <tooltip>
-                                                            <Tooltip text="Background Tile Select" />
-                                                         </tooltip>
-                                                      </CheckBox>
-                                                      <CheckBox fx:id="debuggerPPUControlS" maxWidth="1.7976931348623157E308" mnemonicParsing="false" text="S" HBox.hgrow="ALWAYS">
-                                                         <HBox.margin>
-                                                            <Insets bottom="5.0" top="5.0" />
-                                                         </HBox.margin>
-                                                         <tooltip>
-                                                            <Tooltip text="Sprite Tile Select" />
-                                                         </tooltip>
-                                                      </CheckBox>
-                                                      <CheckBox fx:id="debuggerPPUControlI" maxWidth="1.7976931348623157E308" mnemonicParsing="false" text="I" HBox.hgrow="ALWAYS">
-                                                         <HBox.margin>
-                                                            <Insets bottom="5.0" top="5.0" />
-                                                         </HBox.margin>
-                                                         <tooltip>
-                                                            <Tooltip text="Increment Mode" />
-                                                         </tooltip>
-                                                      </CheckBox>
-                                                      <TextField fx:id="debuggerPPUControlN" minWidth="10.0" text="0" HBox.hgrow="ALWAYS" />
-                                                      <Label maxWidth="1.7976931348623157E308" minWidth="20.0" text="N">
-                                                         <padding>
-                                                            <Insets bottom="5.0" right="5.0" top="5.0" />
-                                                         </padding>
-                                                         <tooltip>
-                                                            <Tooltip text="Nametable Select" />
-                                                         </tooltip>
-                                                      </Label>
-                                                   </children>
-                                                   <padding>
-                                                      <Insets bottom="5.0" left="5.0" right="5.0" top="5.0" />
-                                                   </padding>
-                                                </HBox>
-                                             </children>
-                                          </HBox>
-                                          <Separator prefWidth="200.0" />
-                                          <HBox>
-                                             <children>
-                                                <Label alignment="CENTER" minWidth="65.0" prefWidth="65.0" text="Mask">
-                                                   <padding>
-                                                      <Insets bottom="10.0" left="5.0" right="5.0" top="10.0" />
-                                                   </padding>
-                                                </Label>
-                                                <Separator orientation="VERTICAL" />
-                                                <HBox spacing="5.0" HBox.hgrow="ALWAYS">
-                                                   <children>
-                                                      <CheckBox fx:id="debuggerPPUMaskB" maxWidth="1.7976931348623157E308" mnemonicParsing="false" text="B" HBox.hgrow="ALWAYS">
-                                                         <HBox.margin>
-                                                            <Insets bottom="5.0" top="5.0" />
-                                                         </HBox.margin>
-                                                         <tooltip>
-                                                            <Tooltip text="Blue Color Emphasis" />
-                                                         </tooltip></CheckBox>
-                                                      <CheckBox fx:id="debuggerPPUMaskG" maxWidth="1.7976931348623157E308" mnemonicParsing="false" text="G" HBox.hgrow="ALWAYS">
-                                                         <HBox.margin>
-                                                            <Insets bottom="5.0" top="5.0" />
-                                                         </HBox.margin>
-                                                         <tooltip>
-                                                            <Tooltip text="Green Color Emphasis" />
-                                                         </tooltip></CheckBox>
-                                                      <CheckBox fx:id="debuggerPPUMaskR" maxWidth="1.7976931348623157E308" mnemonicParsing="false" text="R" HBox.hgrow="ALWAYS">
-                                                         <HBox.margin>
-                                                            <Insets bottom="5.0" top="5.0" />
-                                                         </HBox.margin>
-                                                         <tooltip>
-                                                            <Tooltip text="Red Color Emphasis" />
-                                                         </tooltip></CheckBox>
-                                                      <CheckBox fx:id="debuggerPPUMasks" maxWidth="1.7976931348623157E308" mnemonicParsing="false" text="s" HBox.hgrow="ALWAYS">
-                                                         <HBox.margin>
-                                                            <Insets bottom="5.0" top="5.0" />
-                                                         </HBox.margin>
-                                                         <tooltip>
-                                                            <Tooltip text="Sprite Enable" />
-                                                         </tooltip></CheckBox>
-                                                      <CheckBox fx:id="debuggerPPUMaskb" maxWidth="1.7976931348623157E308" mnemonicParsing="false" text="b" HBox.hgrow="ALWAYS">
-                                                         <HBox.margin>
-                                                            <Insets bottom="5.0" top="5.0" />
-                                                         </HBox.margin>
-                                                         <tooltip>
-                                                            <Tooltip text="Background Enable" />
-                                                         </tooltip></CheckBox>
-                                                      <CheckBox fx:id="debuggerPPUMaskM" maxWidth="1.7976931348623157E308" mnemonicParsing="false" text="M" HBox.hgrow="ALWAYS">
-                                                         <HBox.margin>
-                                                            <Insets bottom="5.0" top="5.0" />
-                                                         </HBox.margin>
-                                                         <tooltip>
-                                                            <Tooltip text="Sprite Left Column Enable" />
-                                                         </tooltip></CheckBox>
-                                                      <CheckBox fx:id="debuggerPPUMaskm" maxWidth="1.7976931348623157E308" mnemonicParsing="false" text="m" HBox.hgrow="ALWAYS">
-                                                         <HBox.margin>
-                                                            <Insets bottom="5.0" top="5.0" />
-                                                         </HBox.margin>
-                                                         <tooltip>
-                                                            <Tooltip text="Background Left Column Enable" />
-                                                         </tooltip></CheckBox>
-                                                      <CheckBox fx:id="debuggerPPUMaskg" maxWidth="1.7976931348623157E308" mnemonicParsing="false" text="g" HBox.hgrow="ALWAYS">
-                                                         <HBox.margin>
-                                                            <Insets bottom="5.0" top="5.0" />
-                                                         </HBox.margin>
-                                                         <tooltip>
-                                                            <Tooltip text="Grayscale" />
-                                                         </tooltip></CheckBox>
-                                                   </children>
-                                                   <padding>
-                                                      <Insets bottom="5.0" left="5.0" right="5.0" top="5.0" />
-                                                   </padding>
-                                                </HBox>
-                                             </children>
-                                          </HBox>
-                                          <Separator prefWidth="200.0" />
-                                          <HBox>
-                                             <children>
-                                                <Label alignment="CENTER" minWidth="65.0" prefWidth="65.0" text="Status">
-                                                   <padding>
-                                                      <Insets bottom="10.0" left="5.0" right="5.0" top="10.0" />
-                                                   </padding>
-                                                </Label>
-                                                <Separator orientation="VERTICAL" />
-                                                <HBox spacing="5.0" HBox.hgrow="ALWAYS">
-                                                   <children>
-                                                      <CheckBox fx:id="debuggerPPUStatusV" maxWidth="1.7976931348623157E308" mnemonicParsing="false" text="V" HBox.hgrow="ALWAYS">
-                                                         <tooltip>
-                                                            <Tooltip text="VBlank" />
-                                                         </tooltip>
-                                                         <HBox.margin>
-                                                            <Insets bottom="5.0" top="5.0" />
-                                                         </HBox.margin></CheckBox>
-                                                      <CheckBox fx:id="debuggerPPUStatusS" maxWidth="1.7976931348623157E308" mnemonicParsing="false" text="S" HBox.hgrow="ALWAYS">
-                                                         <tooltip>
-                                                            <Tooltip text="Sprite 0 Hit" />
-                                                         </tooltip>
-                                                         <HBox.margin>
-                                                            <Insets bottom="5.0" top="5.0" />
-                                                         </HBox.margin></CheckBox>
-                                                      <CheckBox fx:id="debuggerPPUStatusO" maxWidth="1.7976931348623157E308" mnemonicParsing="false" text="O" HBox.hgrow="ALWAYS">
-                                                         <tooltip>
-                                                            <Tooltip text="Sprite Overflow" />
-                                                         </tooltip>
-                                                         <HBox.margin>
-                                                            <Insets bottom="5.0" top="5.0" />
-                                                         </HBox.margin></CheckBox>
-                                                   </children>
-                                                   <padding>
-                                                      <Insets bottom="5.0" left="5.0" right="5.0" top="5.0" />
-                                                   </padding>
-                                                </HBox>
-                                             </children>
-                                          </HBox>
-                                          <Separator prefWidth="200.0" />
-                                          <HBox>
-                                             <children>
-                                                <Label alignment="CENTER" minWidth="65.0" prefWidth="65.0" text="PPU">
-                                                   <padding>
-                                                      <Insets bottom="10.0" left="5.0" right="5.0" top="10.0" />
-                                                   </padding>
-                                                </Label>
-                                                <Separator orientation="VERTICAL" />
-                                                <HBox spacing="5.0" HBox.hgrow="ALWAYS">
-                                                   <padding>
-                                                      <Insets bottom="5.0" left="5.0" right="5.0" top="5.0" />
-                                                   </padding>
-                                                   <children>
-                                                      <TextField fx:id="debuggerPPUPPUScroll" maxWidth="1.7976931348623157E308" minWidth="10.0" HBox.hgrow="ALWAYS" />
-                                                      <Label minWidth="50.0" text="Scroll">
-                                                         <padding>
-                                                            <Insets bottom="5.0" left="5.0" right="5.0" top="5.0" />
-                                                         </padding>
-                                                      </Label>
-                                                      <TextField fx:id="debuggerPPUPPUAddress" maxWidth="1.7976931348623157E308" minWidth="10.0" HBox.hgrow="ALWAYS" />
-                                                      <Label minWidth="65.0" text="Address">
-                                                         <padding>
-                                                            <Insets bottom="5.0" left="5.0" right="5.0" top="5.0" />
-                                                         </padding>
-                                                      </Label>
-                                                      <TextField fx:id="debuggerPPUPPUData" disable="true" maxWidth="1.7976931348623157E308" minWidth="10.0" HBox.hgrow="ALWAYS" />
-                                                      <Label minWidth="42.0" text="Data">
-                                                         <padding>
-                                                            <Insets bottom="5.0" left="5.0" right="5.0" top="5.0" />
-                                                         </padding>
-                                                      </Label>
-                                                   </children>
-                                                </HBox>
-                                             </children>
-                                          </HBox>
-                                          <Separator prefWidth="200.0" />
-                                          <HBox>
-                                             <children>
-                                                <Label alignment="CENTER" minWidth="65.0" prefWidth="65.0" text="OAM">
-                                                   <padding>
-                                                      <Insets bottom="10.0" left="5.0" right="5.0" top="10.0" />
-                                                   </padding>
-                                                </Label>
-                                                <Separator orientation="VERTICAL" />
-                                                <HBox spacing="5.0" HBox.hgrow="ALWAYS">
-                                                   <padding>
-                                                      <Insets bottom="5.0" left="5.0" right="5.0" top="5.0" />
-                                                   </padding>
-                                                   <children>
-                                                      <TextField fx:id="debuggerPPUOAMDMA" disable="true" maxWidth="1.7976931348623157E308" minWidth="10.0" HBox.hgrow="ALWAYS" />
-                                                      <Label minWidth="50.0" text="DMA">
-                                                         <padding>
-                                                            <Insets bottom="5.0" left="5.0" right="5.0" top="5.0" />
-                                                         </padding>
-                                                      </Label>
-                                                      <TextField fx:id="debuggerPPUOAMAddress" maxWidth="1.7976931348623157E308" minWidth="10.0" HBox.hgrow="ALWAYS" />
-                                                      <Label minWidth="65.0" text="Address">
-                                                         <padding>
-                                                            <Insets bottom="5.0" left="5.0" right="5.0" top="5.0" />
-                                                         </padding>
-                                                      </Label>
-                                                      <TextField fx:id="debuggerPPUOAMData" maxWidth="1.7976931348623157E308" minWidth="10.0" HBox.hgrow="ALWAYS" />
-                                                      <Label minWidth="42.0" text="Data">
-                                                         <padding>
-                                                            <Insets bottom="5.0" left="5.0" right="5.0" top="5.0" />
-                                                         </padding>
-                                                      </Label>
-                                                   </children>
-                                                </HBox>
-                                             </children>
-                                          </HBox>
+                                          <ToggleButton fx:id="debuggerControlRun" maxWidth="1.7976931348623157E308" mnemonicParsing="false" selected="true" text="Run" HBox.hgrow="ALWAYS">
+                                             <tooltip>
+                                                <Tooltip text="Toggle Running" />
+                                             </tooltip>
+                                          </ToggleButton>
+                                          <Button fx:id="debuggerControlInto" maxWidth="1.7976931348623157E308" mnemonicParsing="false" text="Into" HBox.hgrow="ALWAYS">
+                                             <tooltip>
+                                                <Tooltip text="Step Into" />
+                                             </tooltip>
+                                          </Button>
+                                          <Button fx:id="debuggerControlOut" maxWidth="1.7976931348623157E308" mnemonicParsing="false" text="Out" HBox.hgrow="ALWAYS">
+                                             <tooltip>
+                                                <Tooltip text="Step Out" />
+                                             </tooltip>
+                                          </Button>
+                                          <Button fx:id="debuggerControlOver" maxWidth="1.7976931348623157E308" mnemonicParsing="false" text="Over" HBox.hgrow="ALWAYS">
+                                             <tooltip>
+                                                <Tooltip text="Step Over" />
+                                             </tooltip>
+                                          </Button>
+                                          <Button fx:id="debuggerControlLine" maxWidth="1.7976931348623157E308" mnemonicParsing="false" text="Line" HBox.hgrow="ALWAYS">
+                                             <tooltip>
+                                                <Tooltip text="Step Line" />
+                                             </tooltip>
+                                          </Button>
                                        </children>
                                        <padding>
-                                          <Insets top="5.0" />
-                                       </padding></VBox>
-                                 </content>
-                              </TitledPane>
-                              <TitledPane animated="false" text="APU">
-                                 <content>
-                                    <VBox>
-                                       <children>
-                                          <Text strokeType="OUTSIDE" strokeWidth="0.0" text="Unimplemented" />
-                                       </children></VBox>
-                                 </content>
-                              </TitledPane>
-                           </children>
-                        </VBox>
+                                          <Insets bottom="5.0" left="5.0" right="5.0" top="5.0" />
+                                       </padding>
+                                    </HBox>
+                                    <TitledPane prefWidth="200.0" text="CPU">
+                                       <content>
+                                          <VBox>
+                                             <children>
+                                                <HBox>
+                                                   <children>
+                                                      <Label alignment="CENTER" minWidth="65.0" prefWidth="65.0" text="Register">
+                                                         <HBox.margin>
+                                                            <Insets />
+                                                         </HBox.margin>
+                                                         <padding>
+                                                            <Insets bottom="10.0" left="5.0" right="5.0" top="10.0" />
+                                                         </padding>
+                                                      </Label>
+                                                      <Separator orientation="VERTICAL" />
+                                                      <HBox spacing="5.0">
+                                                         <padding>
+                                                            <Insets bottom="5.0" left="5.0" right="5.0" top="5.0" />
+                                                         </padding>
+                                                         <children>
+                                                            <Label minWidth="-Infinity" text="PC">
+                                                               <padding>
+                                                                  <Insets bottom="5.0" right="5.0" top="5.0" />
+                                                               </padding>
+                                                               <tooltip>
+                                                                  <Tooltip text="Program Counter" />
+                                                               </tooltip>
+                                                            </Label>
+                                                            <TextField fx:id="debuggerCPURegisterPC" maxWidth="1.7976931348623157E308" minHeight="31.0" minWidth="10.0" text="0" HBox.hgrow="ALWAYS">
+                                                               <HBox.margin>
+                                                                  <Insets />
+                                                               </HBox.margin>
+                                                               <padding>
+                                                                  <Insets bottom="5.0" left="5.0" right="5.0" top="5.0" />
+                                                               </padding>
+                                                            </TextField>
+                                                            <Label text="A">
+                                                               <padding>
+                                                                  <Insets bottom="5.0" left="5.0" right="5.0" top="5.0" />
+                                                               </padding>
+                                                               <tooltip>
+                                                                  <Tooltip text="Accumulator" />
+                                                               </tooltip>
+                                                            </Label>
+                                                            <TextField fx:id="debuggerCPURegisterA" maxWidth="1.7976931348623157E308" minHeight="31.0" minWidth="10.0" text="0" HBox.hgrow="ALWAYS">
+                                                               <HBox.margin>
+                                                                  <Insets />
+                                                               </HBox.margin>
+                                                               <padding>
+                                                                  <Insets bottom="5.0" left="5.0" right="5.0" top="5.0" />
+                                                               </padding>
+                                                            </TextField>
+                                                            <Label text="X">
+                                                               <padding>
+                                                                  <Insets bottom="5.0" left="5.0" right="5.0" top="5.0" />
+                                                               </padding>
+                                                               <tooltip>
+                                                                  <Tooltip text="X Register" />
+                                                               </tooltip>
+                                                            </Label>
+                                                            <TextField fx:id="debuggerCPURegisterX" maxWidth="1.7976931348623157E308" minHeight="31.0" minWidth="10.0" text="0" HBox.hgrow="ALWAYS">
+                                                               <HBox.margin>
+                                                                  <Insets />
+                                                               </HBox.margin>
+                                                               <padding>
+                                                                  <Insets bottom="5.0" left="5.0" right="5.0" top="5.0" />
+                                                               </padding>
+                                                            </TextField>
+                                                            <Label text="Y">
+                                                               <padding>
+                                                                  <Insets bottom="5.0" left="5.0" right="5.0" top="5.0" />
+                                                               </padding>
+                                                               <tooltip>
+                                                                  <Tooltip text="Y Register" />
+                                                               </tooltip>
+                                                            </Label>
+                                                            <TextField fx:id="debuggerCPURegisterY" maxWidth="1.7976931348623157E308" minHeight="31.0" minWidth="10.0" text="0" HBox.hgrow="ALWAYS">
+                                                               <HBox.margin>
+                                                                  <Insets />
+                                                               </HBox.margin>
+                                                               <padding>
+                                                                  <Insets bottom="5.0" left="5.0" right="5.0" top="5.0" />
+                                                               </padding>
+                                                            </TextField>
+                                                         </children>
+                                                      </HBox>
+                                                   </children>
+                                                </HBox>
+                                                <Separator prefWidth="200.0" />
+                                                <HBox>
+                                                   <children>
+                                                      <Label alignment="CENTER" minWidth="65.0" prefWidth="65.0" text="Status">
+                                                         <padding>
+                                                            <Insets bottom="10.0" left="5.0" right="5.0" top="10.0" />
+                                                         </padding>
+                                                         <HBox.margin>
+                                                            <Insets />
+                                                         </HBox.margin>
+                                                      </Label>
+                                                      <Separator orientation="VERTICAL" />
+                                                      <HBox spacing="5.0" HBox.hgrow="ALWAYS">
+                                                         <padding>
+                                                            <Insets bottom="10.0" left="5.0" right="5.0" top="10.0" />
+                                                         </padding>
+                                                         <children>
+                                                            <CheckBox fx:id="debuggerCPUStatusN" maxWidth="1000.0" mnemonicParsing="false" text="N" HBox.hgrow="ALWAYS">
+                                                               <tooltip>
+                                                                  <Tooltip text="Negative" />
+                                                               </tooltip>
+                                                            </CheckBox>
+                                                            <CheckBox fx:id="debuggerCPUStatusV" maxWidth="1000.0" mnemonicParsing="false" text="V" HBox.hgrow="ALWAYS">
+                                                               <tooltip>
+                                                                  <Tooltip text="Overflow" />
+                                                               </tooltip>
+                                                            </CheckBox>
+                                                            <CheckBox fx:id="debuggerCPUStatusU" maxWidth="1000.0" mnemonicParsing="false" text="U" HBox.hgrow="ALWAYS">
+                                                               <tooltip>
+                                                                  <Tooltip text="Unused" />
+                                                               </tooltip>
+                                                            </CheckBox>
+                                                            <CheckBox fx:id="debuggerCPUStatusB" maxWidth="1000.0" mnemonicParsing="false" text="B" HBox.hgrow="ALWAYS">
+                                                               <tooltip>
+                                                                  <Tooltip text="Break" />
+                                                               </tooltip>
+                                                            </CheckBox>
+                                                            <CheckBox fx:id="debuggerCPUStatusD" maxWidth="1000.0" mnemonicParsing="false" text="D" HBox.hgrow="ALWAYS">
+                                                               <tooltip>
+                                                                  <Tooltip text="Decimal" />
+                                                               </tooltip>
+                                                            </CheckBox>
+                                                            <CheckBox fx:id="debuggerCPUStatusI" maxWidth="1000.0" mnemonicParsing="false" text="I" HBox.hgrow="ALWAYS">
+                                                               <tooltip>
+                                                                  <Tooltip text="Interrupt" />
+                                                               </tooltip>
+                                                            </CheckBox>
+                                                            <CheckBox fx:id="debuggerCPUStatusZ" maxWidth="1000.0" mnemonicParsing="false" text="Z" HBox.hgrow="ALWAYS">
+                                                               <tooltip>
+                                                                  <Tooltip text="Zero" />
+                                                               </tooltip>
+                                                            </CheckBox>
+                                                            <CheckBox fx:id="debuggerCPUStatusC" maxWidth="1000.0" mnemonicParsing="false" text="C" HBox.hgrow="ALWAYS">
+                                                               <tooltip>
+                                                                  <Tooltip text="Carry" />
+                                                               </tooltip>
+                                                            </CheckBox>
+                                                         </children>
+                                                      </HBox>
+                                                   </children>
+                                                </HBox>
+                                                <Separator prefWidth="200.0" />
+                                                <HBox>
+                                                   <children>
+                                                      <Label alignment="CENTER" minWidth="65.0" prefWidth="65.0" text="Stack">
+                                                         <padding>
+                                                            <Insets bottom="10.0" left="5.0" right="5.0" top="10.0" />
+                                                         </padding>
+                                                         <HBox.margin>
+                                                            <Insets />
+                                                         </HBox.margin>
+                                                      </Label>
+                                                      <Separator orientation="VERTICAL" />
+                                                      <TextField fx:id="debuggerCPUStack" maxWidth="1.7976931348623157E308" minHeight="31.0" minWidth="10.0" HBox.hgrow="ALWAYS">
+                                                         <HBox.margin>
+                                                            <Insets bottom="5.0" left="5.0" right="5.0" top="5.0" />
+                                                         </HBox.margin>
+                                                      </TextField>
+                                                   </children>
+                                                </HBox>
+                                             </children>
+                                             <padding>
+                                                <Insets top="5.0" />
+                                             </padding>
+                                          </VBox>
+                                       </content>
+                                    </TitledPane>
+                                    <TitledPane animated="false" text="PPU">
+                                       <content>
+                                          <VBox>
+                                             <children>
+                                                <HBox>
+                                                   <children>
+                                                      <Label alignment="CENTER" minWidth="65.0" prefWidth="65.0" text="Control">
+                                                         <padding>
+                                                            <Insets bottom="10.0" left="5.0" right="5.0" top="10.0" />
+                                                         </padding>
+                                                      </Label>
+                                                      <Separator orientation="VERTICAL" />
+                                                      <HBox spacing="5.0" HBox.hgrow="ALWAYS">
+                                                         <children>
+                                                            <CheckBox fx:id="debuggerPPUControlV" maxWidth="1.7976931348623157E308" mnemonicParsing="false" text="V" HBox.hgrow="ALWAYS">
+                                                               <HBox.margin>
+                                                                  <Insets bottom="5.0" top="5.0" />
+                                                               </HBox.margin>
+                                                               <tooltip>
+                                                                  <Tooltip text="NMI Enable" />
+                                                               </tooltip>
+                                                            </CheckBox>
+                                                            <CheckBox fx:id="debuggerPPUControlP" maxWidth="1.7976931348623157E308" mnemonicParsing="false" text="P" HBox.hgrow="ALWAYS">
+                                                               <HBox.margin>
+                                                                  <Insets bottom="5.0" top="5.0" />
+                                                               </HBox.margin>
+                                                               <tooltip>
+                                                                  <Tooltip text="PPU Masater/Slave" />
+                                                               </tooltip>
+                                                            </CheckBox>
+                                                            <CheckBox fx:id="debuggerPPUControlH" maxWidth="1.7976931348623157E308" mnemonicParsing="false" text="H" HBox.hgrow="ALWAYS">
+                                                               <HBox.margin>
+                                                                  <Insets bottom="5.0" top="5.0" />
+                                                               </HBox.margin>
+                                                               <tooltip>
+                                                                  <Tooltip text="Sprite Height" />
+                                                               </tooltip>
+                                                            </CheckBox>
+                                                            <CheckBox fx:id="debuggerPPUControlB" maxWidth="1.7976931348623157E308" mnemonicParsing="false" text="B" HBox.hgrow="ALWAYS">
+                                                               <HBox.margin>
+                                                                  <Insets bottom="5.0" top="5.0" />
+                                                               </HBox.margin>
+                                                               <tooltip>
+                                                                  <Tooltip text="Background Tile Select" />
+                                                               </tooltip>
+                                                            </CheckBox>
+                                                            <CheckBox fx:id="debuggerPPUControlS" maxWidth="1.7976931348623157E308" mnemonicParsing="false" text="S" HBox.hgrow="ALWAYS">
+                                                               <HBox.margin>
+                                                                  <Insets bottom="5.0" top="5.0" />
+                                                               </HBox.margin>
+                                                               <tooltip>
+                                                                  <Tooltip text="Sprite Tile Select" />
+                                                               </tooltip>
+                                                            </CheckBox>
+                                                            <CheckBox fx:id="debuggerPPUControlI" maxWidth="1.7976931348623157E308" mnemonicParsing="false" text="I" HBox.hgrow="ALWAYS">
+                                                               <HBox.margin>
+                                                                  <Insets bottom="5.0" top="5.0" />
+                                                               </HBox.margin>
+                                                               <tooltip>
+                                                                  <Tooltip text="Increment Mode" />
+                                                               </tooltip>
+                                                            </CheckBox>
+                                                            <TextField fx:id="debuggerPPUControlN" minWidth="10.0" text="0" HBox.hgrow="ALWAYS" />
+                                                            <Label maxWidth="1.7976931348623157E308" minWidth="20.0" text="N">
+                                                               <padding>
+                                                                  <Insets bottom="5.0" right="5.0" top="5.0" />
+                                                               </padding>
+                                                               <tooltip>
+                                                                  <Tooltip text="Nametable Select" />
+                                                               </tooltip>
+                                                            </Label>
+                                                         </children>
+                                                         <padding>
+                                                            <Insets bottom="5.0" left="5.0" right="5.0" top="5.0" />
+                                                         </padding>
+                                                      </HBox>
+                                                   </children>
+                                                </HBox>
+                                                <Separator prefWidth="200.0" />
+                                                <HBox>
+                                                   <children>
+                                                      <Label alignment="CENTER" minWidth="65.0" prefWidth="65.0" text="Mask">
+                                                         <padding>
+                                                            <Insets bottom="10.0" left="5.0" right="5.0" top="10.0" />
+                                                         </padding>
+                                                      </Label>
+                                                      <Separator orientation="VERTICAL" />
+                                                      <HBox spacing="5.0" HBox.hgrow="ALWAYS">
+                                                         <children>
+                                                            <CheckBox fx:id="debuggerPPUMaskB" maxWidth="1.7976931348623157E308" mnemonicParsing="false" text="B" HBox.hgrow="ALWAYS">
+                                                               <HBox.margin>
+                                                                  <Insets bottom="5.0" top="5.0" />
+                                                               </HBox.margin>
+                                                               <tooltip>
+                                                                  <Tooltip text="Blue Color Emphasis" />
+                                                               </tooltip>
+                                                            </CheckBox>
+                                                            <CheckBox fx:id="debuggerPPUMaskG" maxWidth="1.7976931348623157E308" mnemonicParsing="false" text="G" HBox.hgrow="ALWAYS">
+                                                               <HBox.margin>
+                                                                  <Insets bottom="5.0" top="5.0" />
+                                                               </HBox.margin>
+                                                               <tooltip>
+                                                                  <Tooltip text="Green Color Emphasis" />
+                                                               </tooltip>
+                                                            </CheckBox>
+                                                            <CheckBox fx:id="debuggerPPUMaskR" maxWidth="1.7976931348623157E308" mnemonicParsing="false" text="R" HBox.hgrow="ALWAYS">
+                                                               <HBox.margin>
+                                                                  <Insets bottom="5.0" top="5.0" />
+                                                               </HBox.margin>
+                                                               <tooltip>
+                                                                  <Tooltip text="Red Color Emphasis" />
+                                                               </tooltip>
+                                                            </CheckBox>
+                                                            <CheckBox fx:id="debuggerPPUMasks" maxWidth="1.7976931348623157E308" mnemonicParsing="false" text="s" HBox.hgrow="ALWAYS">
+                                                               <HBox.margin>
+                                                                  <Insets bottom="5.0" top="5.0" />
+                                                               </HBox.margin>
+                                                               <tooltip>
+                                                                  <Tooltip text="Sprite Enable" />
+                                                               </tooltip>
+                                                            </CheckBox>
+                                                            <CheckBox fx:id="debuggerPPUMaskb" maxWidth="1.7976931348623157E308" mnemonicParsing="false" text="b" HBox.hgrow="ALWAYS">
+                                                               <HBox.margin>
+                                                                  <Insets bottom="5.0" top="5.0" />
+                                                               </HBox.margin>
+                                                               <tooltip>
+                                                                  <Tooltip text="Background Enable" />
+                                                               </tooltip>
+                                                            </CheckBox>
+                                                            <CheckBox fx:id="debuggerPPUMaskM" maxWidth="1.7976931348623157E308" mnemonicParsing="false" text="M" HBox.hgrow="ALWAYS">
+                                                               <HBox.margin>
+                                                                  <Insets bottom="5.0" top="5.0" />
+                                                               </HBox.margin>
+                                                               <tooltip>
+                                                                  <Tooltip text="Sprite Left Column Enable" />
+                                                               </tooltip>
+                                                            </CheckBox>
+                                                            <CheckBox fx:id="debuggerPPUMaskm" maxWidth="1.7976931348623157E308" mnemonicParsing="false" text="m" HBox.hgrow="ALWAYS">
+                                                               <HBox.margin>
+                                                                  <Insets bottom="5.0" top="5.0" />
+                                                               </HBox.margin>
+                                                               <tooltip>
+                                                                  <Tooltip text="Background Left Column Enable" />
+                                                               </tooltip>
+                                                            </CheckBox>
+                                                            <CheckBox fx:id="debuggerPPUMaskg" maxWidth="1.7976931348623157E308" mnemonicParsing="false" text="g" HBox.hgrow="ALWAYS">
+                                                               <HBox.margin>
+                                                                  <Insets bottom="5.0" top="5.0" />
+                                                               </HBox.margin>
+                                                               <tooltip>
+                                                                  <Tooltip text="Grayscale" />
+                                                               </tooltip>
+                                                            </CheckBox>
+                                                         </children>
+                                                         <padding>
+                                                            <Insets bottom="5.0" left="5.0" right="5.0" top="5.0" />
+                                                         </padding>
+                                                      </HBox>
+                                                   </children>
+                                                </HBox>
+                                                <Separator prefWidth="200.0" />
+                                                <HBox>
+                                                   <children>
+                                                      <Label alignment="CENTER" minWidth="65.0" prefWidth="65.0" text="Status">
+                                                         <padding>
+                                                            <Insets bottom="10.0" left="5.0" right="5.0" top="10.0" />
+                                                         </padding>
+                                                      </Label>
+                                                      <Separator orientation="VERTICAL" />
+                                                      <HBox spacing="5.0" HBox.hgrow="ALWAYS">
+                                                         <children>
+                                                            <CheckBox fx:id="debuggerPPUStatusV" maxWidth="1.7976931348623157E308" mnemonicParsing="false" text="V" HBox.hgrow="ALWAYS">
+                                                               <tooltip>
+                                                                  <Tooltip text="VBlank" />
+                                                               </tooltip>
+                                                               <HBox.margin>
+                                                                  <Insets bottom="5.0" top="5.0" />
+                                                               </HBox.margin>
+                                                            </CheckBox>
+                                                            <CheckBox fx:id="debuggerPPUStatusS" maxWidth="1.7976931348623157E308" mnemonicParsing="false" text="S" HBox.hgrow="ALWAYS">
+                                                               <tooltip>
+                                                                  <Tooltip text="Sprite 0 Hit" />
+                                                               </tooltip>
+                                                               <HBox.margin>
+                                                                  <Insets bottom="5.0" top="5.0" />
+                                                               </HBox.margin>
+                                                            </CheckBox>
+                                                            <CheckBox fx:id="debuggerPPUStatusO" maxWidth="1.7976931348623157E308" mnemonicParsing="false" text="O" HBox.hgrow="ALWAYS">
+                                                               <tooltip>
+                                                                  <Tooltip text="Sprite Overflow" />
+                                                               </tooltip>
+                                                               <HBox.margin>
+                                                                  <Insets bottom="5.0" top="5.0" />
+                                                               </HBox.margin>
+                                                            </CheckBox>
+                                                         </children>
+                                                         <padding>
+                                                            <Insets bottom="5.0" left="5.0" right="5.0" top="5.0" />
+                                                         </padding>
+                                                      </HBox>
+                                                   </children>
+                                                </HBox>
+                                                <Separator prefWidth="200.0" />
+                                                <HBox>
+                                                   <children>
+                                                      <Label alignment="CENTER" minWidth="65.0" prefWidth="65.0" text="PPU">
+                                                         <padding>
+                                                            <Insets bottom="10.0" left="5.0" right="5.0" top="10.0" />
+                                                         </padding>
+                                                      </Label>
+                                                      <Separator orientation="VERTICAL" />
+                                                      <HBox spacing="5.0" HBox.hgrow="ALWAYS">
+                                                         <padding>
+                                                            <Insets bottom="5.0" left="5.0" right="5.0" top="5.0" />
+                                                         </padding>
+                                                         <children>
+                                                            <TextField fx:id="debuggerPPUPPUScroll" maxWidth="1.7976931348623157E308" minWidth="10.0" HBox.hgrow="ALWAYS" />
+                                                            <Label minWidth="50.0" text="Scroll">
+                                                               <padding>
+                                                                  <Insets bottom="5.0" left="5.0" right="5.0" top="5.0" />
+                                                               </padding>
+                                                            </Label>
+                                                            <TextField fx:id="debuggerPPUPPUAddress" maxWidth="1.7976931348623157E308" minWidth="10.0" HBox.hgrow="ALWAYS" />
+                                                            <Label minWidth="65.0" text="Address">
+                                                               <padding>
+                                                                  <Insets bottom="5.0" left="5.0" right="5.0" top="5.0" />
+                                                               </padding>
+                                                            </Label>
+                                                            <TextField fx:id="debuggerPPUPPUData" disable="true" maxWidth="1.7976931348623157E308" minWidth="10.0" HBox.hgrow="ALWAYS" />
+                                                            <Label minWidth="42.0" text="Data">
+                                                               <padding>
+                                                                  <Insets bottom="5.0" left="5.0" right="5.0" top="5.0" />
+                                                               </padding>
+                                                            </Label>
+                                                         </children>
+                                                      </HBox>
+                                                   </children>
+                                                </HBox>
+                                                <Separator prefWidth="200.0" />
+                                                <HBox>
+                                                   <children>
+                                                      <Label alignment="CENTER" minWidth="65.0" prefWidth="65.0" text="OAM">
+                                                         <padding>
+                                                            <Insets bottom="10.0" left="5.0" right="5.0" top="10.0" />
+                                                         </padding>
+                                                      </Label>
+                                                      <Separator orientation="VERTICAL" />
+                                                      <HBox spacing="5.0" HBox.hgrow="ALWAYS">
+                                                         <padding>
+                                                            <Insets bottom="5.0" left="5.0" right="5.0" top="5.0" />
+                                                         </padding>
+                                                         <children>
+                                                            <TextField fx:id="debuggerPPUOAMDMA" disable="true" maxWidth="1.7976931348623157E308" minWidth="10.0" HBox.hgrow="ALWAYS" />
+                                                            <Label minWidth="50.0" text="DMA">
+                                                               <padding>
+                                                                  <Insets bottom="5.0" left="5.0" right="5.0" top="5.0" />
+                                                               </padding>
+                                                            </Label>
+                                                            <TextField fx:id="debuggerPPUOAMAddress" maxWidth="1.7976931348623157E308" minWidth="10.0" HBox.hgrow="ALWAYS" />
+                                                            <Label minWidth="65.0" text="Address">
+                                                               <padding>
+                                                                  <Insets bottom="5.0" left="5.0" right="5.0" top="5.0" />
+                                                               </padding>
+                                                            </Label>
+                                                            <TextField fx:id="debuggerPPUOAMData" maxWidth="1.7976931348623157E308" minWidth="10.0" HBox.hgrow="ALWAYS" />
+                                                            <Label minWidth="42.0" text="Data">
+                                                               <padding>
+                                                                  <Insets bottom="5.0" left="5.0" right="5.0" top="5.0" />
+                                                               </padding>
+                                                            </Label>
+                                                         </children>
+                                                      </HBox>
+                                                   </children>
+                                                </HBox>
+                                             </children>
+                                             <padding>
+                                                <Insets top="5.0" />
+                                             </padding>
+                                          </VBox>
+                                       </content>
+                                    </TitledPane>
+                                    <TitledPane animated="false" text="APU">
+                                       <content>
+                                          <VBox>
+                                             <children>
+                                                <Text strokeType="OUTSIDE" strokeWidth="0.0" text="Unimplemented" />
+                                             </children>
+                                          </VBox>
+                                       </content>
+                                    </TitledPane>
+                                 </children>
+                              </VBox>
+                           </content>
+                        </ScrollPane>
                      </items>
                   </SplitPane>
                </content>
@@ -629,7 +662,10 @@
          							</HBox>
          						</right>
          					</BorderPane>
-         					<BorderPane fx:id="consolePane" VBox.vgrow="ALWAYS" />
+         					<BorderPane fx:id="consolePane" VBox.vgrow="ALWAYS">
+                           <center>
+                              <Text strokeType="OUTSIDE" strokeWidth="0.0" text="Initialising Log" BorderPane.alignment="CENTER" />
+                           </center></BorderPane>
          </children>
       				</VBox>
       </content>

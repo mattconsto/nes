@@ -103,7 +103,7 @@ public class RicohPPU extends Controlable {
 	        // Pallete RAM indexes
 			return palletRAM[l % 0x20];
 		} else {
-			System.out.println("!!! [PPU] Invalid Address.");
+			logger.warn("Invalid Address.");
 		}
 		return 0;
 	}
@@ -157,7 +157,7 @@ public class RicohPPU extends Controlable {
 	        // Pallete RAM indexes
 			palletRAM[l % 0x20] = v;
 		} else {
-			System.out.println("!!! [PPU] Invalid Address.");
+			logger.warn("Invalid Address.");
 		}
 	}
 
@@ -310,7 +310,6 @@ public class RicohPPU extends Controlable {
     			}
     		}
     		
-//    		frame.repaint();
     		canvas.getGraphicsContext2D().drawImage(image, 0, 0);
     		
     		long delta = (1000 / frameRate) - (System.currentTimeMillis() - startTime);
@@ -334,7 +333,7 @@ public class RicohPPU extends Controlable {
 	
 
 	public RicohPPU(Log log, Canvas canvas, NESCartridge game) {
-		this.logger = new Logger(log, "Picture");
+		this.logger = new Logger(log, "PPU", true);
 		this.game  = game;
 		this.canvas = canvas;
 		

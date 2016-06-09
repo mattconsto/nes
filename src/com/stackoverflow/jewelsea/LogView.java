@@ -56,7 +56,7 @@ public class LogView extends ListView<LogRecord> {
 
 		// Cheaky way to add the styling.
 		getStylesheets().add(this.getClass().getResource("log-view.css").toExternalForm());
-
+		
 		Timeline logTransfer = new Timeline(new KeyFrame(Duration.seconds(1), event -> {
 			logger.log.drainTo(logItems);
 

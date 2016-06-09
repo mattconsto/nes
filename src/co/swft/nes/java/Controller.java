@@ -2,7 +2,6 @@ package co.swft.nes.java;
 
 import java.io.File;
 import java.lang.reflect.Field;
-import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
@@ -50,7 +49,7 @@ import javafx.util.Callback;
 public class Controller extends Application {
 	private Stage stage;
 	private Log log = new Log();
-	private Logger logger = new Logger(log, "App");
+	private Logger logger = new Logger(log, "App", true);
 	
 	private NESCartridge game;
 
