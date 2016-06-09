@@ -4,6 +4,7 @@ import java.io.File;
 import java.lang.reflect.Field;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 
 import com.stackoverflow.jewelsea.*;
 
@@ -71,10 +72,10 @@ public class Controller extends Application {
 	@FXML private Button debuggerControlOut;
 	@FXML private Button debuggerControlOver;
 	@FXML private Button debuggerControlLine;
-	@FXML private TextField debuggerCPUREgisterPC;
-	@FXML private TextField debuggerCPUREgisterA;
-	@FXML private TextField debuggerCPUREgisterX;
-	@FXML private TextField debuggerCPUREgisterY;
+	@FXML private TextField debuggerCPURegisterPC;
+	@FXML private TextField debuggerCPURegisterA;
+	@FXML private TextField debuggerCPURegisterX;
+	@FXML private TextField debuggerCPURegisterY;
 	@FXML private CheckBox debuggerCPUStatusN;
 	@FXML private CheckBox debuggerCPUStatusV;
 	@FXML private CheckBox debuggerCPUStatusU;
@@ -138,7 +139,7 @@ public class Controller extends Application {
 		"BEQ $%02x", 			"SBC ($%3$02x%2$02x),Y", 	"???", 			"???", 	"???", 			"SBC $%02x,X", 	"INC $%02x,X", 	"???", 	"SED", 	"SBC $%3$02x%2$02x,Y", 	"???", 		"???", 	"???", 		"SBC $%3$02x%2$02x,X", 	"INC $%3$02x%2$02x,X", 	"???"
 	};
 	
-	private Map<Integer, Integer> instructionMap = new HashMap<>();
+	private Map<Integer, Integer> instructionMap = new ConcurrentHashMap<>();
 	
 	private int[] instructionLength = {1, 2, 1, 1, 1, 2, 2, 1, 1, 2, 1, 1, 1, 3, 3, 1, 2, 2, 1, 1, 1, 2, 2, 1, 1, 3, 1, 1, 1, 3, 3, 1, 3, 2, 1, 1, 2, 2, 2, 1, 1, 2, 1, 1, 3, 3, 3, 1, 2, 2, 1, 1, 1, 2, 2, 1, 1, 3, 1, 1, 1, 3, 3, 1, 1, 2, 1, 1, 1, 2, 2, 1, 1, 2, 1, 1, 3, 3, 3, 1, 2, 2, 1, 1, 1, 2, 2, 1, 1, 3, 1, 1, 1, 3, 3, 1, 1, 2, 1, 1, 1, 2, 2, 1, 1, 2, 1, 1, 3, 3, 3, 1, 2, 2, 1, 1, 1, 2, 2, 1, 1, 3, 1, 1, 1, 3, 3, 1, 1, 2, 1, 1, 2, 2, 2, 1, 1, 1, 1, 1, 3, 3, 3, 1, 2, 2, 1, 1, 2, 2, 1, 1, 2, 3, 1, 1, 1, 3, 1, 1, 2, 2, 2, 1, 2, 2, 2, 1, 1, 2, 1, 1, 3, 3, 3, 1, 2, 2, 1, 1, 2, 2, 2, 1, 1, 3, 1, 1, 3, 3, 3, 1, 2, 2, 1, 1, 2, 2, 2, 1, 1, 2, 1, 1, 3, 3, 3, 1, 2, 2, 1, 1, 1, 2, 2, 1, 1, 3, 1, 1, 1, 3, 3, 1, 2, 2, 1, 1, 2, 2, 2, 1, 1, 2, 1, 1, 3, 3, 3, 1, 2, 2, 1, 1, 1, 2, 2, 1, 1, 3, 1, 1, 1, 3, 3, 1, 1};
 
@@ -187,8 +188,8 @@ public class Controller extends Application {
 		instructionMap.clear();
 		
 		for(int i = 0, pc = 0; pc < game.PRG_ROM.length; i++) {
-			debuggerList.getItems().add(String.format("%4$04x\t" + instructionSet[game.PRG_ROM[pc] & 0xff], game.PRG_ROM[(pc+1)%game.PRG_ROM.length], game.PRG_ROM[(pc+2)%game.PRG_ROM.length], game.PRG_ROM[(pc+3)%game.PRG_ROM.length], pc));
-			instructionMap.put(pc, i);
+			debuggerList.getItems().add(String.format("%4$04x\t" + instructionSet[game.PRG_ROM[pc] & 0xff], game.PRG_ROM[(pc+1)%game.PRG_ROM.length], game.PRG_ROM[(pc+2)%game.PRG_ROM.length], game.PRG_ROM[(pc+3)%game.PRG_ROM.length], pc + 0x8000));
+			instructionMap.put(pc + 0x8000, i);
 			pc += instructionLength[game.PRG_ROM[pc] & 0xff];
 		}
 		
@@ -293,11 +294,64 @@ public class Controller extends Application {
 			cpu = new RicohCPU(log, game, ppu, apu);
 			
 			disassemble();
+			cpu.addCycleListener(e -> Platform.runLater(() -> {
+				debuggerStatus.setText("Currently executing: " + instructionSet[e.instruction & 0xff]);
+				
+				try {
+					int position = instructionMap.get(cpu.state.pc & 0xffff);
+					debuggerList.getSelectionModel().select(position);
+					debuggerList.scrollTo(position);
+				} catch(NullPointerException exception) {
+					logger.error("CPU out of alignment: " + Integer.toHexString(cpu.state.pc & 0xffff));
+				}
+				
+				debuggerCPURegisterPC.setText(Integer.toHexString(Short.toUnsignedInt(cpu.state.pc)));
+				debuggerCPURegisterA.setText(Integer.toHexString(Byte.toUnsignedInt(cpu.state.a)));
+				debuggerCPURegisterX.setText(Integer.toHexString(Byte.toUnsignedInt(cpu.state.x)));
+				debuggerCPURegisterY.setText(Integer.toHexString(Byte.toUnsignedInt(cpu.state.y)));
+				debuggerCPUStatusN.setSelected(cpu.getNegativeFlag());
+				debuggerCPUStatusV.setSelected(cpu.getOverflowFlag());
+				debuggerCPUStatusU.setIndeterminate(true);
+				debuggerCPUStatusB.setSelected(cpu.getBreakFlag());
+				debuggerCPUStatusD.setSelected(cpu.getDecimalFlag());
+				debuggerCPUStatusI.setSelected(cpu.getInterruptFlag());
+				debuggerCPUStatusZ.setSelected(cpu.getZeroFlag());
+				debuggerCPUStatusC.setSelected(cpu.getCarryFlag());
+				debuggerCPUStack.setText(Integer.toHexString(Byte.toUnsignedInt(cpu.state.sp)));
+				
+				debuggerPPUControlV.setSelected((ppu.controller & 0x80) != 0);
+				debuggerPPUControlP.setSelected((ppu.controller & 0x40) != 0);
+				debuggerPPUControlH.setSelected((ppu.controller & 0x20) != 0);
+				debuggerPPUControlB.setSelected((ppu.controller & 0x10) != 0);
+				debuggerPPUControlS.setSelected((ppu.controller & 0x08) != 0);
+				debuggerPPUControlI.setSelected((ppu.controller & 0x04) != 0);
+				debuggerPPUControlN.setText(Integer.toHexString(ppu.status & 0x03));
+				debuggerPPUMaskB.setSelected((ppu.mask & 0x80) != 0);
+				debuggerPPUMaskG.setSelected((ppu.mask & 0x40) != 0);
+				debuggerPPUMaskR.setSelected((ppu.mask & 0x20) != 0);
+				debuggerPPUMasks.setSelected((ppu.mask & 0x10) != 0);
+				debuggerPPUMaskb.setSelected((ppu.mask & 0x08) != 0);
+				debuggerPPUMaskM.setSelected((ppu.mask & 0x04) != 0);
+				debuggerPPUMaskm.setSelected((ppu.mask & 0x02) != 0);
+				debuggerPPUMaskg.setSelected((ppu.mask & 0x01) != 0);
+				debuggerPPUStatusV.setSelected((ppu.status & 0x80) != 0);
+				debuggerPPUStatusS.setSelected((ppu.status & 0x40) != 0);
+				debuggerPPUStatusO.setSelected((ppu.status & 0x10) != 0);
+				debuggerPPUPPUScroll.setText(Integer.toHexString(ppu.scroll & 0xff));
+				debuggerPPUPPUAddress.setText(Integer.toHexString(ppu.address & 0xff));
+				debuggerPPUOAMAddress.setText(Integer.toHexString(ppu.oamAddress & 0xff));
+				debuggerPPUOAMData.setText(Integer.toHexString(ppu.oamData & 0xff));
+				
+			}));
 			generateSprites();
 			
-//			apu.start();
-//			ppu.start();
-//			cpu.start();
+			apu.pauseMonitor();
+			ppu.pauseMonitor();
+			cpu.pauseMonitor();
+			
+			apu.start();
+			ppu.start();
+			cpu.start();
 			
 			logger.info("System Created");
 		} catch (Exception e) {
@@ -320,10 +374,6 @@ public class Controller extends Application {
 	@FXML protected void emulationToggle(ActionEvent event) {
 		logger.info("Toggling Emulation");
 		
-		if(apu != null && !apu.isAlive()) apu.start();
-		if(ppu != null && !ppu.isAlive()) ppu.start();
-		if(cpu != null && !cpu.isAlive()) cpu.start();
-		
 		if(apu != null) apu.toggleMonitor();
 		if(ppu != null) ppu.toggleMonitor();
 		if(cpu != null) cpu.toggleMonitor();
@@ -339,6 +389,10 @@ public class Controller extends Application {
 		apu = new RicohAPU(log);
 		ppu = new RicohPPU(log, emulationCanvas, game);
 		cpu = new RicohCPU(log, game, ppu, apu);
+
+		apu.pauseMonitor();
+		ppu.pauseMonitor();
+		cpu.pauseMonitor();
 
 		apu.start();
 		ppu.start();

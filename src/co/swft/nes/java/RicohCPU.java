@@ -1,5 +1,8 @@
 package co.swft.nes.java;
 
+import java.util.ArrayList;
+import java.util.List;
+
 import com.stackoverflow.jewelsea.Log;
 import com.stackoverflow.jewelsea.Logger;
 
@@ -28,26 +31,6 @@ public class RicohCPU extends Controlable {
 	
 	public co.swft.nes.java.State state;
 	
-	// List of instructions so we can display helpful info as we run through the game.
-	public String[] instructionSet = {
-		"BRK\tImplicit",				"ORA ($%3$02x%2$02x,X)\tIndexed Indirect", 	"???\tUnknown", 			"???\tUnknown", 	"???\tUnknown", 			"ORA $%02x\tZero Page", 		"ASL $%02x\tZero Page", 		"???\tUnknown", 	"PHP\tImplicit", 	"ORA #%02x\tImmediate", 		"ASL Accumulator", 		"???\tUnknown", 	"???\tUnknown", 		"ORA $%3$02x%2$02x\tAbsolute", 		"ASL $%3$02x%2$02x\tAbsolute", 		"???\tUnknown", 
-		"BPL $%02x\tRelative",			"ORA ($%3$02x%2$02x),Y\tIndirect Indexed", 	"???\tUnknown", 			"???\tUnknown", 	"???\tUnknown", 			"ORA $%02x,X\tZero Page,X", 	"ASL $%02x,X\tZero Page,X", 	"???\tUnknown", 	"CLC\tImplicit", 	"ORA $%3$02x%2$02x,Y\tAbsolute,Y", 	"???\tUnknown", 		"???\tUnknown", 	"???\tUnknown", 		"ORA $%3$02x%2$02x,X\tAbsolute,X", 	"ASL $%3$02x%2$02x,X\tAbsolute,X", 	"???\tUnknown", 
-		"JSR $%3$02x%2$02x\tAbsolute",	"AND ($%3$02x%2$02x,X)\tIndexed Indirect", 	"???\tUnknown", 			"???\tUnknown", 	"BIT $%02x\tZero Page", 		"AND $%02x\tZero Page", 		"ROL $%02x\tZero Page", 		"???\tUnknown", 	"PLP\tImplicit", 	"AND #%02x\tImmediate", 		"ROL Accumulator", 		"???\tUnknown", 	"BIT $%3$02x%2$02x\tAbsolute", 		"AND $%3$02x%2$02x\tAbsolute", 		"ROL $%3$02x%2$02x\tAbsolute", 		"???\tUnknown", 
-		"BMI $%02x\tRelative", 			"AND ($%3$02x%2$02x),Y\tIndirect Indexed", 	"???\tUnknown", 			"???\tUnknown", 	"???\tUnknown", 			"AND $%02x,X\tZero Page,X", 	"ROL $%02x,X\tZero Page,X", 	"???\tUnknown", 	"SEC\tImplicit", 	"AND $%3$02x%2$02x,Y\tAbsolute,Y", 	"???\tUnknown", 		"???\tUnknown", 	"???\tUnknown", 		"AND $%3$02x%2$02x,X\tAbsolute,X", 	"ROL $%3$02x%2$02x,X\tAbsolute,X", 	"???\tUnknown", 
-		"RTI\tImplicit",				"EOR ($%3$02x%2$02x,X)\tIndexed Indirect", 	"???\tUnknown", 			"???\tUnknown", 	"???\tUnknown", 			"EOR $%02x\tZero Page", 		"LSR $%02x\tZero Page", 		"???\tUnknown", 	"PHA\tImplicit", 	"EOR #%02x\tImmediate", 		"LSR Accumulator", 		"???\tUnknown", 	"JMP $%3$02x%2$02x\tAbsolute", 		"EOR $%3$02x%2$02x\tAbsolute", 		"LSR $%3$02x%2$02x\tAbsolute", 		"???\tUnknown", 
-		"BVC $%02x\tRelative",			"EOR ($%3$02x%2$02x),Y\tIndirect Indexed", 	"???\tUnknown", 			"???\tUnknown", 	"???\tUnknown", 			"EOR $%02x,X\tZero Page,X", 	"LSR $%02x,X\tZero Page,X", 	"???\tUnknown", 	"CLI\tImplicit", 	"EOR $%3$02x%2$02x,Y\tAbsolute,Y", 	"???\tUnknown", 		"???\tUnknown", 	"???\tUnknown", 		"EOR $%3$02x%2$02x,X\tAbsolute,X", 	"LSR $%3$02x%2$02x,X\tAbsolute,X", 	"???\tUnknown", 
-		"RTS\tImplicit", 				"ADC ($%3$02x%2$02x,X)\tIndexed Indirect", 	"???\tUnknown", 			"???\tUnknown", 	"???\tUnknown", 			"ADC $%02x\tZero Page", 		"ROR $%02x\tZero Page", 		"???\tUnknown", 	"PLA\tImplicit", 	"ADC #%02x\tImmediate", 		"ROR Accumulator", 		"???\tUnknown", 	"JMP ($%3$02x%2$02x)\tIndirect", 		"ADC $%3$02x%2$02x\tAbsolute", 		"ROR $%3$02x%2$02x\tAbsolute", 		"???\tUnknown", 
-		"BVS $%02x\tRelative", 			"ADC ($%3$02x%2$02x),Y\tIndirect Indexed", 	"???\tUnknown", 			"???\tUnknown", 	"???\tUnknown", 			"ADC $%02x,X\tZero Page,X", 	"ROR $%02x,X\tZero Page,X", 	"???\tUnknown", 	"SEI\tImplicit", 	"ADC $%3$02x%2$02x,Y\tAbsolute,Y", 	"???\tUnknown", 		"???\tUnknown", 	"???\tUnknown", 		"ADC $%3$02x%2$02x,X\tAbsolute,X", 	"ROR $%3$02x%2$02x,X\tAbsolute,X", 	"???\tUnknown", 
-		"???\tUnknown", 				"STA ($%3$02x%2$02x,X)\tIndexed Indirect", 	"???\tUnknown", 			"???\tUnknown", 	"STY $%02x\tZero Page", 		"STA $%02x\tZero Page", 		"STX $%02x\tZero Page", 		"???\tUnknown", 	"DEY\tImplicit", 	"???\tUnknown", 		"TXA\tImplicit", 	"???\tUnknown", 	"STY $%3$02x%2$02x\tAbsolute", 		"STA $%3$02x%2$02x\tAbsolute", 		"STX $%3$02x%2$02x\tAbsolute", 		"???\tUnknown", 
-		"BCC $%02x\tRelative", 			"STA ($%3$02x%2$02x),Y\tIndirect Indexed", 	"???\tUnknown", 			"???\tUnknown", 	"STY $%02x,X\tZero Page,X", 	"STA $%02x,X\tZero Page,X", 	"STX $%02x,Y\tZero Page,Y", 	"???\tUnknown", 	"TYA\tImplicit", 	"STA $%3$02x%2$02x,Y\tAbsolute,Y", 	"TXS\tImplicit", 	"???\tUnknown", 	"???\tUnknown", 		"STA $%3$02x%2$02x,X\tAbsolute,X", 	"???\tUnknown", 		"???\tUnknown", 
-		"LDY #%02x\tImmediate", 		"LDA ($%3$02x%2$02x,X)\tIndexed Indirect", 	"LDX #%02x\tImmediate", 	"???\tUnknown", 	"LDY $%02x\tZero Page", 		"LDA $%02x\tZero Page", 		"LDX $%02x\tZero Page", 		"???\tUnknown", 	"TAY\tImplicit", 	"LDA #%02x\tImmediate", 		"TAX\tImplicit", 	"???\tUnknown", 	"LDY $%3$02x%2$02x\tAbsolute", 		"LDA $%3$02x%2$02x\tAbsolute", 		"LDX $%3$02x%2$02x\tAbsolute", 		"???\tUnknown", 
-		"BCS $%02x\tRelative",			"LDA ($%3$02x%2$02x),Y\tIndirect Indexed", 	"???\tUnknown", 			"???\tUnknown", 	"LDY $%02x,X\tZero Page,X", 	"LDA $%02x,X\tZero Page,X", 	"LDX $%02x,Y\tZero Page,Y", 	"???\tUnknown", 	"CLV\tImplicit", 	"LDA $%3$02x%2$02x,Y\tAbsolute,Y", 	"TSX\tImplicit", 	"???\tUnknown", 	"LDY $%3$02x%2$02x,X\tAbsolute,X", 	"LDA $%3$02x%2$02x,X\tAbsolute,X", 	"LDX $%3$02x%2$02x,Y\tAbsolute,Y", 	"???\tUnknown", 
-		"CPY #%02x\tImmediate", 		"CMP ($%3$02x%2$02x,X)\tIndexed Indirect", 	"???\tUnknown", 			"???\tUnknown", 	"CPY $%02x\tZero Page", 		"CMP $%02x\tZero Page", 		"DEC $%02x\tZero Page", 		"???\tUnknown", 	"INY\tImplicit", 	"CMP #%02x\tImmediate", 		"DEX\tImplicit", 	"???\tUnknown", 	"CPY $%3$02x%2$02x\tAbsolute", 		"CMP $%3$02x%2$02x\tAbsolute", 		"DEC $%3$02x%2$02x\tAbsolute", 		"???\tUnknown", 
-		"BNE $%02x\tRelative", 			"CMP ($%3$02x%2$02x),Y\tIndirect Indexed", 	"???\tUnknown", 			"???\tUnknown", 	"???\tUnknown", 			"CMP $%02x,X\tZero Page,X", 	"DEC $%02x,X\tZero Page,X", 	"???\tUnknown", 	"CLD\tImplicit", 	"CMP $%3$02x%2$02x,Y\tAbsolute,Y", 	"???\tUnknown", 		"???\tUnknown", 	"???\tUnknown", 		"CMP $%3$02x%2$02x,X\tAbsolute,X", 	"DEC $%3$02x%2$02x,X\tAbsolute,X", 	"???\tUnknown", 
-		"CPX #%02x\tImmediate", 		"SBC ($%3$02x%2$02x,X)\tIndexed Indirect", 	"???\tUnknown", 			"???\tUnknown", 	"CPX $%02x\tZero Page", 		"SBC $%02x\tZero Page", 		"INC $%02x\tZero Page", 		"???\tUnknown", 	"INX\tImplicit", 	"SBC #%02x\tImmediate", 		"NOP\tImplicit", 	"???\tUnknown", 	"CPX $%3$02x%2$02x\tAbsolute", 		"SBC $%3$02x%2$02x\tAbsolute", 		"INC $%3$02x%2$02x\tAbsolute", 		"???\tUnknown", 
-		"BEQ $%02x\tRelative", 			"SBC ($%3$02x%2$02x),Y\tIndirect Indexed", 	"???\tUnknown", 			"???\tUnknown", 	"???\tUnknown", 			"SBC $%02x,X\tZero Page,X", 	"INC $%02x,X\tZero Page,X", 	"???\tUnknown", 	"SED\tImplicit", 	"SBC $%3$02x%2$02x,Y\tAbsolute,Y", 	"???\tUnknown", 		"???\tUnknown", 	"???\tUnknown", 		"SBC $%3$02x%2$02x,X\tAbsolute,X", 	"INC $%3$02x%2$02x,X\tAbsolute,X", 	"???\tUnknown"
-	};
-
 	/**
 	 * Constructs a new RicohCPU.
 	 * @param game NESFile
@@ -380,15 +363,11 @@ public class RicohCPU extends Controlable {
 		
 		// Run until we reach the end
 		for(; !stopFlag && !getBreakFlag(); state.pc++) {
-			//try{Thread.sleep(1);}catch(Exception e){}
-			
-			// Print out log
-//			System.out.format("$%04x\t$%4$04x\t%s\n", state.pc, readMemoryMap(state.pc+1)&0xFF, readMemoryMap(state.pc+2)&0xFF, (short) (state.pc + 0x10 - 0x8000), instructionSet[readMemoryMap(state.pc)&0xFF]);
-			
 //			State old = state.clone();
 			
-			executeInstruction(readMemoryMap(state.pc));
-			
+			byte instruction = readMemoryMap(state.pc);
+			fireCycleListeners(new CycleEvent(instruction));
+			executeInstruction(instruction);
 			checkMonitor();
 			
 			// Automatically end emulation if we start to loop without any changes.
@@ -397,6 +376,20 @@ public class RicohCPU extends Controlable {
 //				break;
 //			}
 		}
+	}
+	
+	private List<CycleListener> listeners = new ArrayList<>();
+	
+	public synchronized boolean addCycleListener(CycleListener l) {
+		return listeners.add(l);
+	}
+	
+	public synchronized boolean removeCycleListener(CycleListener l) {
+		return listeners.remove(l);
+	}
+	
+	public synchronized void fireCycleListeners(CycleEvent e) {
+		listeners.forEach(l -> {l.cycleStarted(e); try{Thread.sleep(50);}catch(Exception ignore){}});
 	}
 	
 	public void executeInstruction(byte instruction) {
