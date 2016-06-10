@@ -1,7 +1,4 @@
-package co.swft.nes.java;
-
-import co.swft.nes.abstracts.Instruction;
-import co.swft.nes.java.State.AddressingMode;
+package co.swft.nes.enums;
 
 public enum InstructionSet {
 	ADC_Immediate	(Instruction.ADC,	AddressingMode.Immediate,	0x69,	2,	2,	false),
@@ -195,22 +192,7 @@ public enum InstructionSet {
 	
 	@Override
 	public String toString() {
-		switch(addressing) {
-			case Implied:     return instruction.toString();
-			case Accumulator: return instruction.toString() + " A";
-			case Immediate:   return instruction.toString() + " #$??";
-			case ZeroPage:    return instruction.toString() + " $??";
-			case ZeroPageX:   return instruction.toString() + " $??,X";
-			case ZeroPageY:   return instruction.toString() + " $??,Y";
-			case Relative:    return instruction.toString() + " $??";
-			case Absolute:    return instruction.toString() + " $????";
-			case AbsoluteX:   return instruction.toString() + " $????,X";
-			case AbsoluteY:   return instruction.toString() + " $????,Y";
-			case Indirect:    return instruction.toString() + " ($????)";
-			case IndirectX:   return instruction.toString() + " ($????,X)";
-			case IndirectY:   return instruction.toString() + " ($????),Y";
-			default:          return instruction.toString();
-		}
+		return toString((byte) 0x00, (byte) 0x00);
 	}
 	
 	/**

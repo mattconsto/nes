@@ -49,7 +49,7 @@ public abstract class CartridgeGame {
 			try {
 	            tableBuilder.addRow(field.getName(), field.get(this));
             } catch (Exception e) {
-            	System.err.println("[FIL] Unable to produce a string representation");
+            	System.err.println("Unable to produce a string representation");
             	break;
             }
 		}

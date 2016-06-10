@@ -7,7 +7,10 @@ import com.stackoverflow.jewelsea.Log;
 import com.stackoverflow.jewelsea.Logger;
 
 import co.swft.nes.abstracts.Controlable;
-import co.swft.nes.abstracts.Instruction;
+import co.swft.nes.enums.EmulationMode;
+import co.swft.nes.enums.Instruction;
+import co.swft.nes.enums.InstructionSet;
+import co.swft.nes.interfaces.CycleListener;
 
 /**
  * Ricoh CPU (2A03) Emulator for the Nintendo Entertainment System..
@@ -28,10 +31,9 @@ import co.swft.nes.abstracts.Instruction;
  */
 public class RicohCPU extends Controlable {
 	private Logger logger;
+	private List<CycleListener> listeners = new ArrayList<>();
 	
 	public co.swft.nes.java.State state;
-	
-	public enum EmulationMode {DEFAULT, INTO, OUT, OVER};
 
 	private EmulationMode mode = EmulationMode.DEFAULT;
 	
@@ -67,29 +69,18 @@ public class RicohCPU extends Controlable {
 			switch(mode) {
 			case DEFAULT:
 				while(!checkMonitor() && !state.getBreakFlag()) {
-					InstructionSet instruction = InstructionSet.lookup(state.readMemoryMap(state.pc) & 0xff);
-					logger.debug("$%04x\t%s", state.pc, instruction.toString(state.readMemoryMap(state.pc+1), state.readMemoryMap(state.pc+2)));
-					fireCycleListeners(new CycleEvent(instruction));
-					executeInstruction(instruction);
-					state.pc += instruction.length;
+					executeInstruction(InstructionSet.lookup(state.readMemoryMap(state.pc) & 0xff));
 				}
 				break;
 			case INTO:
-				if(!checkMonitor() && !state.getBreakFlag()) {
-					InstructionSet instruction = InstructionSet.lookup(state.readMemoryMap(state.pc) & 0xff);
-					logger.debug("$%04x\t%s", state.pc, instruction.toString(state.readMemoryMap(state.pc+1), state.readMemoryMap(state.pc+2)));
-					fireCycleListeners(new CycleEvent(instruction));
-					executeInstruction(instruction);
-					state.pc += instruction.length;
+				if (!checkMonitor() && !state.getBreakFlag()) {
+					executeInstruction(InstructionSet.lookup(state.readMemoryMap(state.pc) & 0xff));
 				}
 				break;
 			case OUT:
 				while(!checkMonitor() && !state.getBreakFlag()) {
 					InstructionSet instruction = InstructionSet.lookup(state.readMemoryMap(state.pc) & 0xff);
-					logger.debug("$%04x\t%s", state.pc, instruction.toString(state.readMemoryMap(state.pc+1), state.readMemoryMap(state.pc+2)));
-					fireCycleListeners(new CycleEvent(instruction));
 					executeInstruction(instruction);
-					state.pc += instruction.length;
 					
 					if(instruction.instruction == Instruction.RTS) break;
 				}
@@ -98,10 +89,7 @@ public class RicohCPU extends Controlable {
 				int depth = 0;
 				while(!checkMonitor() && !state.getBreakFlag()) {
 					InstructionSet instruction = InstructionSet.lookup(state.readMemoryMap(state.pc) & 0xff);
-					logger.debug("$%04x\t%s", state.pc, instruction.toString(state.readMemoryMap(state.pc+1), state.readMemoryMap(state.pc+2)));
-					fireCycleListeners(new CycleEvent(instruction));
 					executeInstruction(instruction);
-					state.pc += instruction.length;
 					
 					if(instruction.instruction == Instruction.JSR) depth++;
 					if(instruction.instruction == Instruction.RTS) depth--;
@@ -114,8 +102,6 @@ public class RicohCPU extends Controlable {
 			checkBlocking();
 		}
 	}
-	
-	private List<CycleListener> listeners = new ArrayList<>();
 	
 	public synchronized boolean addCycleListener(CycleListener l) {
 		return listeners.add(l);
@@ -130,6 +116,9 @@ public class RicohCPU extends Controlable {
 	}
 	
 	public void executeInstruction(InstructionSet instruction) {
+		logger.debug("$%04x\t%s", state.pc, instruction.toString(state.readMemoryMap(state.pc+1), state.readMemoryMap(state.pc+2)));
+		fireCycleListeners(new CycleEvent(instruction));
+		
 		switch (instruction.instruction) {
 			case ADC: {
 				int i = (state.a & 0xff) + (state.read(instruction.addressing) & 0xff) + (state.getCarryFlag() ? 1 : 0);
@@ -179,7 +168,7 @@ public class RicohCPU extends Controlable {
 			case CLC: state.setCarryFlag    (false); break;
 			case CLD: state.setDecimalFlag  (false); break;
 			case CLI: state.setInterruptFlag(false); break;
-			case CLV: state.setOverflowFlag(false); break;
+			case CLV: state.setOverflowFlag (false); break;
 			case CMP: {
 				byte b = (byte) ((state.a & 0xff) - (state.read(instruction.addressing) & 0xff));
 				state.setNegativeFlag(b);
@@ -341,6 +330,8 @@ public class RicohCPU extends Controlable {
 			} break;
 			default: logger.error("Invalid Instruction: " + instruction); break;
 		}
+
+		state.pc += instruction.length;
 	}
 	
 	/**

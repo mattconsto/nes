@@ -7,7 +7,8 @@ import java.util.concurrent.ConcurrentHashMap;
 
 import com.stackoverflow.jewelsea.*;
 
-import co.swft.nes.java.RicohCPU.EmulationMode;
+import co.swft.nes.enums.EmulationMode;
+import co.swft.nes.enums.InstructionSet;
 import javafx.application.Application;
 import javafx.application.Platform;
 import javafx.beans.property.*;

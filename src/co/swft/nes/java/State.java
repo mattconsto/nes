@@ -5,6 +5,7 @@ import java.util.Arrays;
 import com.stackoverflow.jewelsea.Log;
 import com.stackoverflow.jewelsea.Logger;
 
+import co.swft.nes.enums.AddressingMode;
 import co.swft.util.BitTools;
 import co.swft.util.TableBuilder;
 
@@ -255,8 +256,6 @@ public class State implements Cloneable {
 		writeMemoryMap((short) location, v);
 	}
 
-	public enum AddressingMode {Implied, Accumulator, Immediate, ZeroPage, ZeroPageX, ZeroPageY, Relative, Absolute, AbsoluteX, AbsoluteY, Indirect, IndirectX, IndirectY};
-	
 	private AddressingMode defaultAddressing = AddressingMode.Immediate;
 	private int            defaultOffset     = 0;
 	

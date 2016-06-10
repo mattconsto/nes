@@ -6,6 +6,7 @@ import java.nio.file.Files;
 import java.util.Arrays;
 
 import co.swft.nes.abstracts.CartridgeGame;
+import co.swft.nes.enums.RegionCode;
 
 /**
  * NES Cartridge
@@ -33,8 +34,6 @@ public class NESCartridge extends CartridgeGame {
 	
 	public byte[] PRG_ROM;
 	public byte[] CHR_ROM;
-
-	public enum RegionCode {PAL, NTSC, BOTH}
 	
 	public NESCartridge(File file) throws IOException, InvalidFileException {
 		super(file);
