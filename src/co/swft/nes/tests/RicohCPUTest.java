@@ -11,76 +11,76 @@ public class RicohCPUTest {
 	public void testAllCPUFlags() {
 		RicohCPU cpu = new RicohCPU(null, null, null, null);
 		
-		assertFalse(cpu.getCarryFlag());
-		cpu.setCarryFlag(true);
-		assertTrue(cpu.getCarryFlag());
-		cpu.setCarryFlag(false);
-		assertFalse(cpu.getCarryFlag());
+		assertFalse(cpu.state.getCarryFlag());
+		cpu.state.setCarryFlag(true);
+		assertTrue(cpu.state.getCarryFlag());
+		cpu.state.setCarryFlag(false);
+		assertFalse(cpu.state.getCarryFlag());
 
-		assertTrue(cpu.getZeroFlag()); // Different as accumulator starts on 0.
-		cpu.setZeroFlag(true);
-		assertTrue(cpu.getZeroFlag());
-		cpu.setZeroFlag(false);
-		assertFalse(cpu.getZeroFlag());
+		assertTrue(cpu.state.getZeroFlag()); // Different as accumulator starts on 0.
+		cpu.state.setZeroFlag(true);
+		assertTrue(cpu.state.getZeroFlag());
+		cpu.state.setZeroFlag(false);
+		assertFalse(cpu.state.getZeroFlag());
 		
-		cpu.setZeroFlag((byte) 0x00);
-		assertTrue(cpu.getZeroFlag());
-		cpu.setZeroFlag((byte) 0x10);
-		assertFalse(cpu.getZeroFlag());
-		cpu.setZeroFlag((byte) 0xFF);
-		assertFalse(cpu.getZeroFlag());
+		cpu.state.setZeroFlag((byte) 0x00);
+		assertTrue(cpu.state.getZeroFlag());
+		cpu.state.setZeroFlag((byte) 0x10);
+		assertFalse(cpu.state.getZeroFlag());
+		cpu.state.setZeroFlag((byte) 0xFF);
+		assertFalse(cpu.state.getZeroFlag());
 
-		assertFalse(cpu.getInterruptFlag());
-		cpu.setInterruptFlag(true);
-		assertTrue(cpu.getInterruptFlag());
-		cpu.setInterruptFlag(false);
-		assertFalse(cpu.getInterruptFlag());
+		assertFalse(cpu.state.getInterruptFlag());
+		cpu.state.setInterruptFlag(true);
+		assertTrue(cpu.state.getInterruptFlag());
+		cpu.state.setInterruptFlag(false);
+		assertFalse(cpu.state.getInterruptFlag());
 
-		assertFalse(cpu.getDecimalFlag());
-		cpu.setDecimalFlag(true);
-		assertTrue(cpu.getDecimalFlag());
-		cpu.setDecimalFlag(false);
-		assertFalse(cpu.getDecimalFlag());
+		assertFalse(cpu.state.getDecimalFlag());
+		cpu.state.setDecimalFlag(true);
+		assertTrue(cpu.state.getDecimalFlag());
+		cpu.state.setDecimalFlag(false);
+		assertFalse(cpu.state.getDecimalFlag());
 		
-		assertFalse(cpu.getBreakFlag());
-		cpu.setBreakFlag(true);
-		assertTrue(cpu.getBreakFlag());
-		cpu.setBreakFlag(false);
-		assertFalse(cpu.getBreakFlag());
+		assertFalse(cpu.state.getBreakFlag());
+		cpu.state.setBreakFlag(true);
+		assertTrue(cpu.state.getBreakFlag());
+		cpu.state.setBreakFlag(false);
+		assertFalse(cpu.state.getBreakFlag());
 
-		assertFalse(cpu.getOverflowFlag());
-		cpu.setOverflowFlag(true);
-		assertTrue(cpu.getOverflowFlag());
-		cpu.setOverflowFlag(false);
-		assertFalse(cpu.getOverflowFlag());
+		assertFalse(cpu.state.getOverflowFlag());
+		cpu.state.setOverflowFlag(true);
+		assertTrue(cpu.state.getOverflowFlag());
+		cpu.state.setOverflowFlag(false);
+		assertFalse(cpu.state.getOverflowFlag());
 
-		assertFalse(cpu.getNegativeFlag());
-		cpu.setNegativeFlag(true);
-		assertTrue(cpu.getNegativeFlag());
-		cpu.setNegativeFlag(false);
-		assertFalse(cpu.getNegativeFlag());
+		assertFalse(cpu.state.getNegativeFlag());
+		cpu.state.setNegativeFlag(true);
+		assertTrue(cpu.state.getNegativeFlag());
+		cpu.state.setNegativeFlag(false);
+		assertFalse(cpu.state.getNegativeFlag());
 		
-		cpu.setNegativeFlag((byte) 0xFF);
-		assertTrue(cpu.getNegativeFlag());
-		cpu.setNegativeFlag((byte) 0x00);
-		assertFalse(cpu.getNegativeFlag());
+		cpu.state.setNegativeFlag((byte) 0xFF);
+		assertTrue(cpu.state.getNegativeFlag());
+		cpu.state.setNegativeFlag((byte) 0x00);
+		assertFalse(cpu.state.getNegativeFlag());
 	}
 
 	@Test
 	public void testCPUStack() {
 		RicohCPU cpu = new RicohCPU(null, null, null, null);
 		
-		cpu.pushStack((byte) 0x01);
-		cpu.pushStack((byte) 0xFF);
-		cpu.pushStack((byte) 0xAB);
+		cpu.state.pushStack((byte) 0x01);
+		cpu.state.pushStack((byte) 0xFF);
+		cpu.state.pushStack((byte) 0xAB);
 		
-		assertEquals((byte) 0xAB, cpu.pullStack());
+		assertEquals((byte) 0xAB, cpu.state.pullStack());
 		
-		cpu.pushStack((byte) 0x11);
+		cpu.state.pushStack((byte) 0x11);
 		
-		assertEquals((byte) 0x11, cpu.pullStack());
-		assertEquals((byte) 0xFF, cpu.pullStack());
-		assertEquals((byte) 0x01, cpu.pullStack());
+		assertEquals((byte) 0x11, cpu.state.pullStack());
+		assertEquals((byte) 0xFF, cpu.state.pullStack());
+		assertEquals((byte) 0x01, cpu.state.pullStack());
 	}
 	
 	@Test

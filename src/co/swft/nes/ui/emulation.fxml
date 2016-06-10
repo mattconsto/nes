@@ -114,11 +114,6 @@
                                                 <Tooltip text="Step Over" />
                                              </tooltip>
                                           </Button>
-                                          <Button fx:id="debuggerControlLine" maxWidth="1.7976931348623157E308" mnemonicParsing="false" text="Line" HBox.hgrow="ALWAYS">
-                                             <tooltip>
-                                                <Tooltip text="Step Line" />
-                                             </tooltip>
-                                          </Button>
                                        </children>
                                        <padding>
                                           <Insets bottom="5.0" left="5.0" right="5.0" top="5.0" />

@@ -7,6 +7,7 @@ import java.util.concurrent.ConcurrentHashMap;
 
 import com.stackoverflow.jewelsea.*;
 
+import co.swft.nes.java.RicohCPU.EmulationMode;
 import javafx.application.Application;
 import javafx.application.Platform;
 import javafx.beans.property.*;
@@ -70,7 +71,6 @@ public class Controller extends Application {
 	@FXML private Button debuggerControlInto;
 	@FXML private Button debuggerControlOut;
 	@FXML private Button debuggerControlOver;
-	@FXML private Button debuggerControlLine;
 	@FXML private TextField debuggerCPURegisterPC;
 	@FXML private TextField debuggerCPURegisterA;
 	@FXML private TextField debuggerCPURegisterX;
@@ -118,30 +118,8 @@ public class Controller extends Application {
 	@FXML private ToggleButton togglePause;
 	@FXML private BorderPane consolePane;
 	
-
-	private String[] instructionSet = {
-		"BRK",				"ORA ($%3$02x%2$02x,X)", 	"???", 			"???", 	"???", 			"ORA $%02x", 		"ASL $%02x", 		"???", 	"PHP", 	"ORA #%02x", 		"ASL Accumulator", 		"???", 	"???", 		"ORA $%3$02x%2$02x", 		"ASL $%3$02x%2$02x", 		"???", 
-		"BPL $%02x",			"ORA ($%3$02x%2$02x),Y", 	"???", 			"???", 	"???", 			"ORA $%02x,X", 	"ASL $%02x,X", 	"???", 	"CLC", 	"ORA $%3$02x%2$02x,Y", 	"???", 		"???", 	"???", 		"ORA $%3$02x%2$02x,X", 	"ASL $%3$02x%2$02x,X", 	"???", 
-		"JSR $%3$02x%2$02x",	"AND ($%3$02x%2$02x,X)", 	"???", 			"???", 	"BIT $%02x", 		"AND $%02x", 		"ROL $%02x", 		"???", 	"PLP", 	"AND #%02x", 		"ROL Accumulator", 		"???", 	"BIT $%3$02x%2$02x", 		"AND $%3$02x%2$02x", 		"ROL $%3$02x%2$02x", 		"???", 
-		"BMI $%02x", 			"AND ($%3$02x%2$02x),Y", 	"???", 			"???", 	"???", 			"AND $%02x,X", 	"ROL $%02x,X", 	"???", 	"SEC", 	"AND $%3$02x%2$02x,Y", 	"???", 		"???", 	"???", 		"AND $%3$02x%2$02x,X", 	"ROL $%3$02x%2$02x,X", 	"???", 
-		"RTI",				"EOR ($%3$02x%2$02x,X)", 	"???", 			"???", 	"???", 			"EOR $%02x", 		"LSR $%02x", 		"???", 	"PHA", 	"EOR #%02x", 		"LSR Accumulator", 		"???", 	"JMP $%3$02x%2$02x", 		"EOR $%3$02x%2$02x", 		"LSR $%3$02x%2$02x", 		"???", 
-		"BVC $%02x",			"EOR ($%3$02x%2$02x),Y", 	"???", 			"???", 	"???", 			"EOR $%02x,X", 	"LSR $%02x,X", 	"???", 	"CLI", 	"EOR $%3$02x%2$02x,Y", 	"???", 		"???", 	"???", 		"EOR $%3$02x%2$02x,X", 	"LSR $%3$02x%2$02x,X", 	"???", 
-		"RTS", 				"ADC ($%3$02x%2$02x,X)", 	"???", 			"???", 	"???", 			"ADC $%02x", 		"ROR $%02x", 		"???", 	"PLA", 	"ADC #%02x", 		"ROR Accumulator", 		"???", 	"JMP ($%3$02x%2$02x)", 		"ADC $%3$02x%2$02x", 		"ROR $%3$02x%2$02x", 		"???", 
-		"BVS $%02x", 			"ADC ($%3$02x%2$02x),Y", 	"???", 			"???", 	"???", 			"ADC $%02x,X", 	"ROR $%02x,X", 	"???", 	"SEI", 	"ADC $%3$02x%2$02x,Y", 	"???", 		"???", 	"???", 		"ADC $%3$02x%2$02x,X", 	"ROR $%3$02x%2$02x,X", 	"???", 
-		"???", 				"STA ($%3$02x%2$02x,X)", 	"???", 			"???", 	"STY $%02x", 		"STA $%02x", 		"STX $%02x", 		"???", 	"DEY", 	"???", 		"TXA", 	"???", 	"STY $%3$02x%2$02x", 		"STA $%3$02x%2$02x", 		"STX $%3$02x%2$02x", 		"???", 
-		"BCC $%02x", 			"STA ($%3$02x%2$02x),Y", 	"???", 			"???", 	"STY $%02x,X", 	"STA $%02x,X", 	"STX $%02x,Y", 	"???", 	"TYA", 	"STA $%3$02x%2$02x,Y", 	"TXS", 	"???", 	"???", 		"STA $%3$02x%2$02x,X", 	"???", 		"???", 
-		"LDY #%02x", 		"LDA ($%3$02x%2$02x,X)", 	"LDX #%02x", 	"???", 	"LDY $%02x", 		"LDA $%02x", 		"LDX $%02x", 		"???", 	"TAY", 	"LDA #%02x", 		"TAX", 	"???", 	"LDY $%3$02x%2$02x", 		"LDA $%3$02x%2$02x", 		"LDX $%3$02x%2$02x", 		"???", 
-		"BCS $%02x",			"LDA ($%3$02x%2$02x),Y", 	"???", 			"???", 	"LDY $%02x,X", 	"LDA $%02x,X", 	"LDX $%02x,Y", 	"???", 	"CLV", 	"LDA $%3$02x%2$02x,Y", 	"TSX", 	"???", 	"LDY $%3$02x%2$02x,X", 	"LDA $%3$02x%2$02x,X", 	"LDX $%3$02x%2$02x,Y", 	"???", 
-		"CPY #%02x", 		"CMP ($%3$02x%2$02x,X)", 	"???", 			"???", 	"CPY $%02x", 		"CMP $%02x", 		"DEC $%02x", 		"???", 	"INY", 	"CMP #%02x", 		"DEX", 	"???", 	"CPY $%3$02x%2$02x", 		"CMP $%3$02x%2$02x", 		"DEC $%3$02x%2$02x", 		"???", 
-		"BNE $%02x", 			"CMP ($%3$02x%2$02x),Y", 	"???", 			"???", 	"???", 			"CMP $%02x,X", 	"DEC $%02x,X", 	"???", 	"CLD", 	"CMP $%3$02x%2$02x,Y", 	"???", 		"???", 	"???", 		"CMP $%3$02x%2$02x,X", 	"DEC $%3$02x%2$02x,X", 	"???", 
-		"CPX #%02x", 		"SBC ($%3$02x%2$02x,X)", 	"???", 			"???", 	"CPX $%02x", 		"SBC $%02x", 		"INC $%02x", 		"???", 	"INX", 	"SBC #%02x", 		"NOP", 	"???", 	"CPX $%3$02x%2$02x", 		"SBC $%3$02x%2$02x", 		"INC $%3$02x%2$02x", 		"???", 
-		"BEQ $%02x", 			"SBC ($%3$02x%2$02x),Y", 	"???", 			"???", 	"???", 			"SBC $%02x,X", 	"INC $%02x,X", 	"???", 	"SED", 	"SBC $%3$02x%2$02x,Y", 	"???", 		"???", 	"???", 		"SBC $%3$02x%2$02x,X", 	"INC $%3$02x%2$02x,X", 	"???"
-	};
-	
 	private Map<Integer, Integer> instructionMap = new ConcurrentHashMap<>();
 	
-	private int[] instructionLength = {1, 2, 1, 1, 1, 2, 2, 1, 1, 2, 1, 1, 1, 3, 3, 1, 2, 2, 1, 1, 1, 2, 2, 1, 1, 3, 1, 1, 1, 3, 3, 1, 3, 2, 1, 1, 2, 2, 2, 1, 1, 2, 1, 1, 3, 3, 3, 1, 2, 2, 1, 1, 1, 2, 2, 1, 1, 3, 1, 1, 1, 3, 3, 1, 1, 2, 1, 1, 1, 2, 2, 1, 1, 2, 1, 1, 3, 3, 3, 1, 2, 2, 1, 1, 1, 2, 2, 1, 1, 3, 1, 1, 1, 3, 3, 1, 1, 2, 1, 1, 1, 2, 2, 1, 1, 2, 1, 1, 3, 3, 3, 1, 2, 2, 1, 1, 1, 2, 2, 1, 1, 3, 1, 1, 1, 3, 3, 1, 1, 2, 1, 1, 2, 2, 2, 1, 1, 1, 1, 1, 3, 3, 3, 1, 2, 2, 1, 1, 2, 2, 1, 1, 2, 3, 1, 1, 1, 3, 1, 1, 2, 2, 2, 1, 2, 2, 2, 1, 1, 2, 1, 1, 3, 3, 3, 1, 2, 2, 1, 1, 2, 2, 2, 1, 1, 3, 1, 1, 3, 3, 3, 1, 2, 2, 1, 1, 2, 2, 2, 1, 1, 2, 1, 1, 3, 3, 3, 1, 2, 2, 1, 1, 1, 2, 2, 1, 1, 3, 1, 1, 1, 3, 3, 1, 2, 2, 1, 1, 2, 2, 2, 1, 1, 2, 1, 1, 3, 3, 3, 1, 2, 2, 1, 1, 1, 2, 2, 1, 1, 3, 1, 1, 1, 3, 3, 1, 1};
-
 	@Override public void start(Stage stage) throws Exception {
 		this.stage = stage;
 
@@ -186,10 +164,13 @@ public class Controller extends Application {
 	private void disassemble() {
 		instructionMap.clear();
 		
+		logger.info("Disassembly Starting");
+		
 		for(int i = 0, pc = 0; pc < game.PRG_ROM.length; i++) {
-			debuggerList.getItems().add(String.format("%4$04x\t" + instructionSet[game.PRG_ROM[pc] & 0xff], game.PRG_ROM[(pc+1)%game.PRG_ROM.length], game.PRG_ROM[(pc+2)%game.PRG_ROM.length], game.PRG_ROM[(pc+3)%game.PRG_ROM.length], pc + 0x8000));
+			InstructionSet instruction = InstructionSet.lookup(game.PRG_ROM[pc] & 0xff);
+			debuggerList.getItems().add(String.format("$%04x\t%s", pc + 0x8000, instruction.toString(game.PRG_ROM[(pc+1)%game.PRG_ROM.length], game.PRG_ROM[(pc+2)%game.PRG_ROM.length])));
 			instructionMap.put(pc + 0x8000, i);
-			pc += instructionLength[game.PRG_ROM[pc] & 0xff];
+			pc += instruction.length;
 		}
 		
 		logger.info("Disassembly Complete");
@@ -223,6 +204,18 @@ public class Controller extends Application {
 		}});
 		
 		debuggerList.setItems(FXCollections.observableArrayList());
+		debuggerControlInto.setOnAction(e -> {
+			cpu.setMode(EmulationMode.INTO);
+			cpu.resumeMonitor();
+		});
+		debuggerControlOut.setOnAction(e -> {
+			cpu.setMode(EmulationMode.OUT);
+			cpu.resumeMonitor();
+		});
+		debuggerControlOver.setOnAction(e -> {
+			cpu.setMode(EmulationMode.OVER);
+			cpu.resumeMonitor();
+		});
 
 		spritesPallet.setItems(FXCollections.observableArrayList(-1, 0, 1, 2, 3));
 		spritesPallet.getSelectionModel().select(0);
@@ -293,8 +286,8 @@ public class Controller extends Application {
 			cpu = new RicohCPU(log, game, ppu, apu);
 			
 			disassemble();
-			cpu.addCycleListener(e -> Platform.runLater(() -> {
-				debuggerStatus.setText("Currently executing: " + instructionSet[e.instruction & 0xff]);
+			cpu.addCycleListener(event -> Platform.runLater(() -> {
+				debuggerStatus.setText("Currently executing: " + event.instruction.toString());
 				
 				try {
 					int position = instructionMap.get(cpu.state.pc & 0xffff);
@@ -308,14 +301,14 @@ public class Controller extends Application {
 				debuggerCPURegisterA.setText(Integer.toHexString(Byte.toUnsignedInt(cpu.state.a)));
 				debuggerCPURegisterX.setText(Integer.toHexString(Byte.toUnsignedInt(cpu.state.x)));
 				debuggerCPURegisterY.setText(Integer.toHexString(Byte.toUnsignedInt(cpu.state.y)));
-				debuggerCPUStatusN.setSelected(cpu.getNegativeFlag());
-				debuggerCPUStatusV.setSelected(cpu.getOverflowFlag());
+				debuggerCPUStatusN.setSelected(cpu.state.getNegativeFlag());
+				debuggerCPUStatusV.setSelected(cpu.state.getOverflowFlag());
 				debuggerCPUStatusU.setIndeterminate(true);
-				debuggerCPUStatusB.setSelected(cpu.getBreakFlag());
-				debuggerCPUStatusD.setSelected(cpu.getDecimalFlag());
-				debuggerCPUStatusI.setSelected(cpu.getInterruptFlag());
-				debuggerCPUStatusZ.setSelected(cpu.getZeroFlag());
-				debuggerCPUStatusC.setSelected(cpu.getCarryFlag());
+				debuggerCPUStatusB.setSelected(cpu.state.getBreakFlag());
+				debuggerCPUStatusD.setSelected(cpu.state.getDecimalFlag());
+				debuggerCPUStatusI.setSelected(cpu.state.getInterruptFlag());
+				debuggerCPUStatusZ.setSelected(cpu.state.getZeroFlag());
+				debuggerCPUStatusC.setSelected(cpu.state.getCarryFlag());
 				debuggerCPUStack.setText(Integer.toHexString(Byte.toUnsignedInt(cpu.state.sp)));
 				
 				debuggerPPUControlV.setSelected((ppu.controller & 0x80) != 0);
@@ -344,8 +337,6 @@ public class Controller extends Application {
 			}));
 			generateSprites();
 			
-			apu.pauseMonitor();
-			ppu.pauseMonitor();
 			cpu.pauseMonitor();
 			
 			apu.start();
@@ -373,8 +364,6 @@ public class Controller extends Application {
 	@FXML protected void emulationToggle(ActionEvent event) {
 		logger.info("Toggling Emulation");
 		
-		if(apu != null) apu.toggleMonitor();
-		if(ppu != null) ppu.toggleMonitor();
 		if(cpu != null) cpu.toggleMonitor();
 	}
 
@@ -389,8 +378,6 @@ public class Controller extends Application {
 		ppu = new RicohPPU(log, emulationCanvas, game);
 		cpu = new RicohCPU(log, game, ppu, apu);
 
-		apu.pauseMonitor();
-		ppu.pauseMonitor();
 		cpu.pauseMonitor();
 
 		apu.start();

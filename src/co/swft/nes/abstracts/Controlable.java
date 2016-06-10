@@ -4,12 +4,16 @@ public abstract class Controlable extends Thread {
 	protected boolean pauseFlag = false;
 	protected boolean stopFlag = false;
 
-	protected synchronized void checkMonitor() {
+	protected synchronized void checkBlocking() {
 		while (pauseFlag) {
 			try {
 				wait();
 			} catch (InterruptedException ignored) {}
 		}
+	}
+	
+	protected synchronized boolean checkMonitor() {
+		return pauseFlag || stopFlag;
 	}
 
 	public synchronized void pauseMonitor() {

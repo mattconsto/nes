@@ -55,7 +55,7 @@ public class RicohAPU extends Controlable {
 	public void run() {
 		while(!stopFlag) {
 			/** Code **/
-			checkMonitor();
+			checkBlocking();
 		}
 	}
 	

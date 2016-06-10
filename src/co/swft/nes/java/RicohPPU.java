@@ -310,7 +310,11 @@ public class RicohPPU extends Controlable {
     			}
     		}
     		
-    		canvas.getGraphicsContext2D().drawImage(image, 0, 0);
+    		if(canvas != null && image != null) {
+    			canvas.getGraphicsContext2D().drawImage(image, 0, 0);
+    		} else {
+    			logger.warn("Unable to update picture");
+    		}
     		
     		long delta = (1000 / frameRate) - (System.currentTimeMillis() - startTime);
     		if(delta > 0) try {
@@ -320,7 +324,7 @@ public class RicohPPU extends Controlable {
 	            e.printStackTrace();
             }
     		
-    		checkMonitor();
+    		checkBlocking();
 		}
 	}
 	
