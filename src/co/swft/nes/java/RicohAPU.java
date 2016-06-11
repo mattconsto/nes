@@ -25,7 +25,7 @@ public class RicohAPU extends Controlable {
 	byte counter    = 0;
 	
 	public RicohAPU(Log log) {
-		logger = new Logger(log, "APU", true);
+		logger = new AlertLogger(log, "APU");
 		logger.info("Created");
 	}
 	

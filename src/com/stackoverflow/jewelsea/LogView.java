@@ -17,17 +17,17 @@ public class LogView extends ListView<LogRecord> {
 	private static final int MAX_ENTRIES = 10_000;
 
 	private final static PseudoClass debug = PseudoClass.getPseudoClass("debug");
-	private final static PseudoClass info = PseudoClass.getPseudoClass("info");
-	private final static PseudoClass warn = PseudoClass.getPseudoClass("warn");
+	private final static PseudoClass info  = PseudoClass.getPseudoClass("info");
+	private final static PseudoClass warn  = PseudoClass.getPseudoClass("warn");
 	private final static PseudoClass error = PseudoClass.getPseudoClass("error");
 
 	private final static SimpleDateFormat timestampFormatter = new SimpleDateFormat("HH:mm:ss.SSS");
 
-	private final BooleanProperty showTimestamp = new SimpleBooleanProperty(false);
-	private final ObjectProperty<Level> filterLevel = new SimpleObjectProperty<>(null);
-	private final BooleanProperty tail = new SimpleBooleanProperty(false);
-	private final BooleanProperty paused = new SimpleBooleanProperty(false);
-	private final DoubleProperty refreshRate = new SimpleDoubleProperty(60);
+	private final BooleanProperty       showTimestamp = new SimpleBooleanProperty(false);
+	private final ObjectProperty<Level> filterLevel   = new SimpleObjectProperty<>(null);
+	private final BooleanProperty       tail          = new SimpleBooleanProperty(false);
+	private final BooleanProperty       paused        = new SimpleBooleanProperty(false);
+	private final DoubleProperty        refreshRate   = new SimpleDoubleProperty(60);
 
 	private final ObservableList<LogRecord> logItems = FXCollections.observableArrayList();
 

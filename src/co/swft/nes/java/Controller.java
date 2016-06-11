@@ -1,9 +1,14 @@
 package co.swft.nes.java;
 
+import java.io.BufferedWriter;
 import java.io.File;
+import java.io.FileWriter;
+import java.io.IOException;
 import java.lang.reflect.Field;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
+
+import javax.imageio.ImageIO;
 
 import com.stackoverflow.jewelsea.*;
 
@@ -14,6 +19,7 @@ import javafx.application.Platform;
 import javafx.beans.property.*;
 import javafx.beans.value.ObservableValue;
 import javafx.collections.FXCollections;
+import javafx.embed.swing.SwingFXUtils;
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;
@@ -50,8 +56,7 @@ import javafx.util.Callback;
  */
 public class Controller extends Application {
 	private Stage stage;
-	private Log log = new Log();
-	private Logger logger = new Logger(log, "App", true);
+	private Logger logger = new AlertLogger(co.swft.nes.java.Launcher.logger.log, "App");
 	
 	private NESCartridge game;
 
@@ -67,8 +72,9 @@ public class Controller extends Application {
 	@FXML private TableColumn<Field, String> infoDescription;
 
 	@FXML private ListView<String> debuggerList;
+	@FXML private ToggleButton debuggerEnable;
 	@FXML private Label debuggerStatus;
-	@FXML private ToggleButton debuggerControlRun;
+	@FXML private Button debuggerControlRun;
 	@FXML private Button debuggerControlInto;
 	@FXML private Button debuggerControlOut;
 	@FXML private Button debuggerControlOver;
@@ -123,10 +129,23 @@ public class Controller extends Application {
 	
 	@Override public void start(Stage stage) throws Exception {
 		this.stage = stage;
-
+		
 		Parent root = FXMLLoader.load(getClass().getResource("/co/swft/nes/ui/emulation.fxml"));
 
 		Scene scene = new Scene(root, 800, 600);
+
+		Thread.setDefaultUncaughtExceptionHandler((t, e) -> {
+			try {
+				Throwable c = e;
+				String    m = "";
+				while(c != null) {
+					m += "\n> " + c.getClass().getName() + (c.getMessage() != null ? ": " + c.getMessage() : "");
+					c = c.getCause();
+				}
+				logger.error(m.replaceFirst("^\n>", ""));
+				e.printStackTrace();
+			} catch(Throwable o) {o.printStackTrace();}
+		});
 		
 		stage.setTitle("Emulation");
 		stage.setScene(scene);
@@ -147,7 +166,7 @@ public class Controller extends Application {
 				byte plane2 = ppu.readMemoryMap(sprite*16 + line + 8);
 				
 				for(int bit = 0; bit < 8; bit++) {
-					int value = ((plane1 >> (7 - bit)) & 1) | ((plane2 >> (7 - bit)) & 1) * 2;
+					int value = ((plane1 >>> (7 - bit)) & 1) | ((plane2 >>> (7 - bit)) & 1) * 2;
 					byte color;
 					if(pallet == -1) {
 						color = defaultPallet[value];
@@ -205,16 +224,17 @@ public class Controller extends Application {
 		}});
 		
 		debuggerList.setItems(FXCollections.observableArrayList());
+		debuggerControlRun.setOnAction(e -> emulationToggle(e));
 		debuggerControlInto.setOnAction(e -> {
-			cpu.setMode(EmulationMode.INTO);
+			cpu.mode = EmulationMode.INTO;
 			cpu.resumeMonitor();
 		});
 		debuggerControlOut.setOnAction(e -> {
-			cpu.setMode(EmulationMode.OUT);
+			cpu.mode = EmulationMode.OUT;
 			cpu.resumeMonitor();
 		});
 		debuggerControlOver.setOnAction(e -> {
-			cpu.setMode(EmulationMode.OVER);
+			cpu.mode = EmulationMode.OVER;
 			cpu.resumeMonitor();
 		});
 
@@ -271,6 +291,79 @@ public class Controller extends Application {
 		if (selected != null) openROM(selected);
 	}
 	
+	@FXML protected void fileDecompile(ActionEvent event) {
+		if(game == null) {
+			logger.error("You need to load a game first!");
+			return;
+		}
+
+		FileChooser chooser = new FileChooser();
+		chooser.setInitialDirectory(new File(System.getProperty("user.dir")));
+		chooser.setInitialFileName("Assembly-" + game.File.getName().replaceFirst("[.][^.]+$", ""));
+		chooser.getExtensionFilters().add(new FileChooser.ExtensionFilter("ASM Files (*.asm)", "*.asm"));
+		chooser.setTitle("Save Assembly As");
+		File file = chooser.showSaveDialog(stage);
+
+		if (file != null) {
+			try {
+				if(!file.getName().endsWith(".asm")) file = new File(file + ".asm");
+				BufferedWriter out = new BufferedWriter(new FileWriter(file));
+				for(String line : debuggerList.getItems()) {
+					out.write(line);
+					out.write("\n");
+				}
+				out.close();
+			} catch (IOException e) {
+				logger.error("Failed writing to " + file);
+			}
+		}
+	}
+	
+	@FXML protected void fileScreenshot(ActionEvent event) {
+		if(game == null) {
+			logger.error("You need to load a game first!");
+			return;
+		}
+		
+		FileChooser chooser = new FileChooser();
+		chooser.setInitialDirectory(new File(System.getProperty("user.dir")));
+		chooser.setInitialFileName("Screenshot-" + game.File.getName().replaceFirst("[.][^.]+$", ""));
+		chooser.getExtensionFilters().add(new FileChooser.ExtensionFilter("PNG Files (*.png)", "*.png"));
+		chooser.setTitle("Save Screenshot As");
+		File file = chooser.showSaveDialog(stage);
+
+		if (file != null) {
+			try {
+				if(!file.getName().endsWith(".png")) file = new File(file + ".png");
+				ImageIO.write(SwingFXUtils.fromFXImage(emulationCanvas.snapshot(null, null), null), "png", file);
+			} catch (IOException e) {
+				logger.error("Failed writing to " + file);
+			}
+		}
+	}
+	
+	@FXML protected void filePatterns(ActionEvent event) {
+		if(game == null) {
+			logger.error("You need to load a game first!");
+			return;
+		}
+		FileChooser chooser = new FileChooser();
+		chooser.setInitialDirectory(new File(System.getProperty("user.dir")));
+		chooser.setInitialFileName("Patterns-" + game.File.getName().replaceFirst("[.][^.]+$", ""));
+		chooser.getExtensionFilters().add(new FileChooser.ExtensionFilter("PNG Files (*.png)", "*.png"));
+		chooser.setTitle("Save Patterns As");
+		File file = chooser.showSaveDialog(stage);
+
+		if (file != null) {
+			try {
+				if(!file.getName().endsWith(".png")) file = new File(file + ".png");
+				ImageIO.write(SwingFXUtils.fromFXImage(spritesCanvas.snapshot(null, null), null), "png", file);
+			} catch (IOException e) {
+				logger.error("Failed writing to " + file);
+			}
+		}
+	}
+	
 	private void openROM(File file) {
 		logger.info("%s selected", file);
 
@@ -282,9 +375,11 @@ public class Controller extends Application {
 			
 			logger.info("Cartridge Loaded");
 
-			apu = new RicohAPU(log);
-			ppu = new RicohPPU(log, emulationCanvas, game);
-			cpu = new RicohCPU(log, game, ppu, apu);
+			apu = new RicohAPU(logger.log);
+			ppu = new RicohPPU(logger.log, emulationCanvas, game);
+			cpu = new RicohCPU(logger.log, game, ppu, apu);
+
+			debuggerEnable.setOnAction(e -> cpu.debugMode = debuggerEnable.isSelected());
 			
 			disassemble();
 			cpu.addCycleListener(event -> Platform.runLater(() -> {
@@ -295,7 +390,7 @@ public class Controller extends Application {
 					debuggerList.getSelectionModel().select(position);
 					debuggerList.scrollTo(position);
 				} catch(NullPointerException exception) {
-					logger.error("CPU out of alignment: " + Integer.toHexString(cpu.state.pc & 0xffff));
+					logger.warn("CPU out of alignment: " + Integer.toHexString(cpu.state.pc & 0xffff));
 				}
 				
 				debuggerCPURegisterPC.setText(Integer.toHexString(Short.toUnsignedInt(cpu.state.pc)));
@@ -365,6 +460,7 @@ public class Controller extends Application {
 	@FXML protected void emulationToggle(ActionEvent event) {
 		logger.info("Toggling Emulation");
 		
+		cpu.mode = EmulationMode.DEFAULT;
 		if(cpu != null) cpu.toggleMonitor();
 	}
 
@@ -375,9 +471,9 @@ public class Controller extends Application {
 		if(ppu != null) ppu.stopMonitor();
 		if(cpu != null) cpu.stopMonitor();
 		
-		apu = new RicohAPU(log);
-		ppu = new RicohPPU(log, emulationCanvas, game);
-		cpu = new RicohCPU(log, game, ppu, apu);
+		apu = new RicohAPU(logger.log);
+		ppu = new RicohPPU(logger.log, emulationCanvas, game);
+		cpu = new RicohCPU(logger.log, game, ppu, apu);
 
 		cpu.pauseMonitor();
 
@@ -394,7 +490,7 @@ public class Controller extends Application {
 		logger.info("Loading State");
 	}
 
-	@FXML protected void helpAbout(ActionEvent event) {
+	@FXML protected void helpAbout(ActionEvent event) throws Exception {
 		logger.info("Opening About Dialogue");
 
 		Alert alert = new Alert(Alert.AlertType.INFORMATION);

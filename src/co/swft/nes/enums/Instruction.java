@@ -1,6 +1,7 @@
 package co.swft.nes.enums;
 
 public enum Instruction {
+	/* Documented */
 	ADC,
 	AND,
 	ASL,
@@ -58,5 +59,29 @@ public enum Instruction {
 	TXS,
 	TYA,
 	
-	ZZZ;
+	/* Undocumented */
+	AAC,
+	AAX,
+	ARR,
+	ASR,
+	ATX,
+	AXA,
+	AXS,
+	DCP,
+	DOP,
+	ISC,
+	KIL,
+	LAR,
+	LAX,
+	// NOP
+	RLA,
+	RRA,
+	// SBC
+	SLO,
+	SRE,
+	SXA,
+	SYA,
+	TOP,
+	XAA,
+	XAS,
 }

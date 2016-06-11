@@ -3,7 +3,7 @@
 }
 
 .log-view .list-cell:debug {
-    -fx-text-fill: gray;
+    -fx-text-fill: darkgray;
 }
 
 .log-view .list-cell:info {

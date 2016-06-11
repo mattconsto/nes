@@ -236,7 +236,7 @@ public class RicohPPU extends Controlable {
 //    				byte xpos  = OAMRAM[i + 3];
 //    				byte ypos  = OAMRAM[i];
 //    				boolean bank = BitTools.getBit(OAMRAM[i + 1], 1);
-//    				byte index = (byte) (OAMRAM[i + 1] & 0xfc >> 2);
+//    				byte index = (byte) (OAMRAM[i + 1] & 0xfc >>> 2);
 //    				
 //    				boolean flipH    = BitTools.getBit(OAMRAM[i + 2], 6);
 //    				boolean flipV    = BitTools.getBit(OAMRAM[i + 2], 7);
@@ -258,8 +258,8 @@ public class RicohPPU extends Controlable {
     			for(int x = 0; x < image.getWidth(); x++) {
     				for(int y = 0; y < image.getHeight(); y++) {
     					int rgb   = imageReader.getArgb(x, y);
-    					byte grey = (byte) (0.2989 * (rgb & 0xFF0000 >> 16) + 0.5870 * (rgb & 0x00FF00 >> 8) + 0.1140 * (rgb & 0x00FF >> 0));
-    					rgb       = grey + (grey >> 8) + (grey >> 16);
+    					byte grey = (byte) (0.2989 * (rgb & 0xFF0000 >>> 16) + 0.5870 * (rgb & 0x00FF00 >>> 8) + 0.1140 * (rgb & 0x00FF >>> 0));
+    					rgb       = grey + (grey >>> 8) + (grey >>> 16);
     					imageWriter.setArgb(x, y, rgb);
     				}
     			}
@@ -270,7 +270,7 @@ public class RicohPPU extends Controlable {
     			for(int x = 0; x < image.getWidth(); x++) {
     				for(int y = 0; y < image.getHeight(); y++) {
     					int  rgb = imageReader.getArgb(x, y);
-    					byte a[] = {(byte) (rgb & 0xFF0000 >> 16), (byte) (rgb & 0x00FF00 >> 8), (byte) (rgb & 0x00FF >> 0)};
+    					byte a[] = {(byte) (rgb & 0xFF0000 >>> 16), (byte) (rgb & 0x00FF00 >>> 8), (byte) (rgb & 0x00FF >>> 0)};
     					a[0]    *= 1.2;
     					a[1]    *= 0.8;
     					a[2]    *= 0.8;
@@ -285,7 +285,7 @@ public class RicohPPU extends Controlable {
     			for(int x = 0; x < image.getWidth(); x++) {
     				for(int y = 0; y < image.getHeight(); y++) {
     					int  rgb = imageReader.getArgb(x, y);
-    					byte a[] = {(byte) (rgb & 0xFF0000 >> 16), (byte) (rgb & 0x00FF00 >> 8), (byte) (rgb & 0x00FF >> 0)};
+    					byte a[] = {(byte) (rgb & 0xFF0000 >>> 16), (byte) (rgb & 0x00FF00 >>> 8), (byte) (rgb & 0x00FF >>> 0)};
     					a[0]    *= 0.8;
     					a[1]    *= 1.2;
     					a[2]    *= 0.8;
@@ -300,7 +300,7 @@ public class RicohPPU extends Controlable {
     			for(int x = 0; x < image.getWidth(); x++) {
     				for(int y = 0; y < image.getHeight(); y++) {
     					int  rgb = imageReader.getArgb(x, y);
-    					byte a[] = {(byte) (rgb & 0xFF0000 >> 16), (byte) (rgb & 0x00FF00 >> 8), (byte) (rgb & 0x00FF >> 0)};
+    					byte a[] = {(byte) (rgb & 0xFF0000 >>> 16), (byte) (rgb & 0x00FF00 >>> 8), (byte) (rgb & 0x00FF >>> 0)};
     					a[0]    *= 0.8;
     					a[1]    *= 0.8;
     					a[2]    *= 1.2;
@@ -337,7 +337,7 @@ public class RicohPPU extends Controlable {
 	
 
 	public RicohPPU(Log log, Canvas canvas, NESCartridge game) {
-		this.logger = new Logger(log, "PPU", true);
+		this.logger = new AlertLogger(log, "PPU");
 		this.game  = game;
 		this.canvas = canvas;
 		

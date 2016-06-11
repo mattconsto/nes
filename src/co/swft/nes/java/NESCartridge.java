@@ -63,19 +63,19 @@ public class NESCartridge extends CartridgeGame {
 		Playchoice_10           = (code[7] & 0x02) == 1;
 		Vs_Unisystem            = (code[7] & 0x01) == 1;
 		
-		int mapperNumber       = ((code[7] & 0xF0) >> 0) | ((code[6] & 0xF0) >> 4);
+		int mapperNumber       = ((code[7] & 0xF0) >>> 0) | ((code[6] & 0xF0) >>> 4);
 		
 		// Extended NES 2.0 Stuff
-		Sub_Mapper_Number        = (code[8] & 0xF0) >> 4;
+		Sub_Mapper_Number        = (code[8] & 0xF0) >>> 4;
 		this.Mapper_Number      = ((code[8] & 0x0F) << 8) | mapperNumber;
 		
 		this.Program_ROM_Pages   = ((code[9] & 0x0F) << 8) | programROMPages;
 		this.Character_ROM_Pages = ((code[9] & 0xF0) << 4) | characterROMpages;
 		
-		Quantity_BBPRGRAM       = (code[10] & 0xF0) >> 4;
+		Quantity_BBPRGRAM       = (code[10] & 0xF0) >>> 4;
 		Quantity_NBPRGRAM       = code[10] & 0x0F;
 
-		Quantity_BBCHRRAM       = (code[11] & 0xF0) >> 4;
+		Quantity_BBCHRRAM       = (code[11] & 0xF0) >>> 4;
 		Quantity_NBCHRRAM       = code[11] & 0x0F;
 		
 		Region                 = ((code[12] & 0x02) == 1) ? RegionCode.BOTH : RegionCode.values()[code[12] & 0x01];

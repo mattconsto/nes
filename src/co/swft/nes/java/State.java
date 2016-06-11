@@ -21,11 +21,17 @@ public class State implements Cloneable {
 	public byte    a     = 0;					// Accumulator
 	public byte    x     = 0;					// X index register
 	public byte    y     = 0;					// Y index register
-	public byte    s     = (byte) 0x02;			// Status register
+	public byte    s     = (byte) 0x34;			// Status register
 	
 	private Logger logger;
 
+	public State(Log log) {
+		this.logger = new AlertLogger(log, "Sta");
+	}
+	
 	public State(NESCartridge game, RicohPPU ppu, RicohAPU apu, byte[] ram, short pc, byte sp, byte a, byte x, byte y, byte s, Log log) {
+		this(log);
+		
 		this.game = game;
 		this.ppu = ppu;
 		this.apu = apu;
@@ -38,7 +44,6 @@ public class State implements Cloneable {
 		this.y = y;
 		this.s = s;
 
-		this.logger = new Logger(log, "Sta", true);
 	}
 
 	/*
@@ -152,12 +157,10 @@ public class State implements Cloneable {
 		} else if(l < 0x8000) {
 			// SRAM
 			return this.game.save[l - 0x6000];
-		} else if(l <= 0xFFFF) {
+		} else {
 			// PRG-ROM
 			//System.out.format("read from %x = %x%n", (l - 0x8000) % game.prg.length, game.prg[(l - 0x8000) % game.prg.length]);
 			return this.game.PRG_ROM[(l - 0x8000) % this.game.PRG_ROM.length];
-		} else {
-			logger.warn("Invalid Address");
 		}
 		return 0;
 	}
@@ -235,15 +238,13 @@ public class State implements Cloneable {
 			}
 		} else if(l < 0x6000) {
 			// Cartridge Expansion ROM
-			logger.warn("Cannot write to Cartridge ROM.");
+			logger.warn("Cannot write to Cartridge ROM: " + l);
 		} else if(l < 0x8000) {
 			// SRAM
 			this.game.save[l - 0x6000] = v;
-		} else if(l <= 0xFFFF) {
-			// PRG-ROM
-			logger.warn("Cannot write to PRG-ROM.");
 		} else {
-			logger.warn("Invalid Address.");
+			// PRG-ROM
+			logger.warn("Cannot write to PRG-ROM: " + l);
 		}
 	}
 
@@ -259,9 +260,9 @@ public class State implements Cloneable {
 	private AddressingMode defaultAddressing = AddressingMode.Immediate;
 	private int            defaultOffset     = 0;
 	
-	public short address()                                         {return read(defaultAddressing, defaultOffset);}
-	public short address(AddressingMode mode)                      {return read(mode, defaultOffset);}
-	public short address(int offset)                               {return read(defaultAddressing, offset);}
+	public short address()                                         {return address(defaultAddressing, defaultOffset);}
+	public short address(AddressingMode mode)                      {return address(mode, defaultOffset);}
+	public short address(int offset)                               {return address(defaultAddressing, offset);}
 	public short address(AddressingMode mode, int offset)          {
 		switch (mode) {
 			case Implied:     logger.error("Cannot get the address of an Implied Instruction!"); return (short) 0;
@@ -297,13 +298,11 @@ public class State implements Cloneable {
 	public void write(int offset, byte value)                      {write(defaultAddressing, offset, value);}
 	public void write(AddressingMode mode, int offset, byte value) {
 		switch (mode) {
-			case Implied:     logger.error("Cannot write to an Implied Instruction!");
-			case Accumulator: this.a = value;
-			default:          writeMemoryMap(address(mode, offset), value);
+			case Implied:     logger.error("Cannot write to an Implied Instruction!"); break;
+			case Accumulator: this.a = value; break;
+			default:          writeMemoryMap(address(mode, offset), value); break;
 		}
 	}
-	
-	public State() {}
 
 	@Override
 	public String toString() {
