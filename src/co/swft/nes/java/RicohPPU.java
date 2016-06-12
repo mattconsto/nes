@@ -316,15 +316,15 @@ public class RicohPPU extends Controlable {
     			logger.warn("Unable to update picture");
     		}
     		
-    		long delta = (1000 / frameRate) - (System.currentTimeMillis() - startTime);
-    		if(delta > 0) try {
-	            Thread.sleep(delta);
-            } catch (InterruptedException e) {
-	            // TODO Auto-generated catch block
-	            e.printStackTrace();
-            }
-    		
-    		checkBlocking();
+			long delta = (1000 / frameRate) - (System.currentTimeMillis() - startTime);
+			if (delta > 0)
+				try {
+					Thread.sleep(delta);
+				} catch (InterruptedException e) {
+	    			logger.warn("Sleep Interrupted, framerate may be unstable.");
+				}
+
+			checkBlocking();
 		}
 	}
 	
@@ -335,7 +335,6 @@ public class RicohPPU extends Controlable {
             			  0xFFFCFCFC, 0xFFA4E4FC, 0xFFB8B8F8, 0xFFD8B8F8, 0xFFF8B8F8, 0xFFF8A4C0, 0xFFF0D0B0, 0xFFFCE0A8, 0xFFF8D878, 0xFFD8F878, 0xFFB8F8B8, 0xFFB8F8D8, 0xFF00FCFC, 0xFFF8D8F8, 0xFF000000, 0xFF000000}[input];
 	}
 	
-
 	public RicohPPU(Log log, Canvas canvas, NESCartridge game) {
 		this.logger = new AlertLogger(log, "PPU");
 		this.game  = game;
@@ -343,20 +342,4 @@ public class RicohPPU extends Controlable {
 		
 		logger.info("Created");
 	}
-	
-//	
-//	public RicohPPU(NESCartridge game) throws IOException {
-//		this.game = game;
-//		
-//		launch("");
-//
-////		frame.getContentPane().setBackground(Color.BLACK);
-////        frame.getContentPane().add(new JLabel(new ImageIcon(image)));
-////        frame.pack();
-////		frame.setLocationRelativeTo(null);
-////		frame.setTitle("Emulator");
-////	    frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-////		frame.setVisible(true);
-//	}
-
 }

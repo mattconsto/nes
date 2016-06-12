@@ -16,8 +16,8 @@
    			<Menu text="File">
       <items>
       				<MenuItem onAction="#fileOpenROM" text="Open ROM" />
-      				<MenuItem onAction="#fileDecompile" text="Decompile" />
-      				<MenuItem onAction="#fileScreenshot" text="Screenshot" />
+      				<MenuItem onAction="#fileDecompile" text="Save Disassembly" />
+      				<MenuItem onAction="#fileScreenshot" text="Take Screenshot" />
       				<MenuItem onAction="#filePatterns" text="Extract Patterns" />
       				<MenuItem onAction="#fileClose" text="Close" />
       </items>
@@ -69,7 +69,7 @@
    			</Tab>
    			<Tab text="Debugger">
                <content>
-                  <SplitPane dividerPositions="0.05462962962962963">
+                  <SplitPane dividerPositions="1.0">
                      <items>
                         <ListView fx:id="debuggerList" style="-fx-font-family: monospace; -fx-font-size: 11px;" />
                         <ScrollPane fitToWidth="true" hbarPolicy="NEVER" minWidth="430.0">

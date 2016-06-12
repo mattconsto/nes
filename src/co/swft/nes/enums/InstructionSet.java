@@ -280,31 +280,31 @@ public enum InstructionSet {
 	public String toString(byte... arguments) {
 		// Instruction overides
 		switch(instruction) {
-			case RTS: return String.format("%2$02x      \t%1$s ; -----------------------------------------", instruction, (byte) code);
+			case RTS: return String.format("%2$02x      \t%1$s ; --------------------", instruction, (byte) code);
 			default:  break;
 		}
 		
 		switch(addr) {
-			case Implied:     return String.format("%2$02x      \t%1$s",                               instruction, (byte) code);
-			case Accumulator: return String.format("%2$02x      \t%1$s A",                             instruction, (byte) code);
-			case Immediate:   return String.format("%2$02x %3$02x   \t%1$s #$%3$02x",               instruction, (byte) code, arguments[0]);
-			case ZeroPage:    return String.format("%2$02x %3$02x   \t%1$s $%3$02x",                instruction, (byte) code, arguments[0]);
-			case ZeroPageX:   return String.format("%2$02x %3$02x   \t%1$s $%3$02x,X",              instruction, (byte) code, arguments[0]);
-			case ZeroPageY:   return String.format("%2$02x %3$02x   \t%1$s $%3$02x,Y",              instruction, (byte) code, arguments[0]);
-			case Relative:    return String.format("%2$02x %3$02x   \t%1$s $%3$02x ; %<d",          instruction, (byte) code, arguments[0]);
-			case Absolute:    return String.format("%2$02x %3$02x %4$02x\t%1$s $%3$02x%4$02x",   instruction, (byte) code, arguments[1], arguments[0]);
-			case AbsoluteX:   return String.format("%2$02x %3$02x %4$02x\t%1$s $%3$02x%4$02x,X", instruction, (byte) code, arguments[1], arguments[0]);
-			case AbsoluteY:   return String.format("%2$02x %3$02x %4$02x\t%1$s $%3$02x%4$02x,Y", instruction, (byte) code, arguments[1], arguments[0]);
-			case Indirect:    return String.format("%2$02x %3$02x %4$02x\t%1$s ($%3$02x%4$02x)", instruction, (byte) code, arguments[1], arguments[0]);
-			case IndirectX:   return String.format("%2$02x %3$02x   \t%1$s ($%3$02x,X)",            instruction, (byte) code, arguments[0]);
-			case IndirectY:   return String.format("%2$02x %3$02x   \t%1$s ($%3$02x),Y",            instruction, (byte) code, arguments[0]);
-			default:          return String.format("%2$02x      \t%1$s",                               instruction, (byte) code);
+			case Implied:     return String.format("%2$02x      \t%1$s",                         instruction, (byte) code);
+			case Accumulator: return String.format("%2$02x      \t%1$s A",                       instruction, (byte) code);
+			case Immediate:   return String.format("%2$02x %3$02x   \t%1$s #$%3$02x",            instruction, (byte) code, arguments[0]);
+			case ZeroPage:    return String.format("%2$02x %3$02x   \t%1$s $%3$02x",             instruction, (byte) code, arguments[0]);
+			case ZeroPageX:   return String.format("%2$02x %3$02x   \t%1$s $%3$02x,X",           instruction, (byte) code, arguments[0]);
+			case ZeroPageY:   return String.format("%2$02x %3$02x   \t%1$s $%3$02x,Y",           instruction, (byte) code, arguments[0]);
+			case Relative:    return String.format("%2$02x %3$02x   \t%1$s $%3$02x ; %<d",       instruction, (byte) code, arguments[0]);
+			case Absolute:    return String.format("%2$02x %4$02x %3$02x\t%1$s $%3$02x%4$02x",   instruction, (byte) code, arguments[1], arguments[0]);
+			case AbsoluteX:   return String.format("%2$02x %4$02x %3$02x\t%1$s $%3$02x%4$02x,X", instruction, (byte) code, arguments[1], arguments[0]);
+			case AbsoluteY:   return String.format("%2$02x %4$02x %3$02x\t%1$s $%3$02x%4$02x,Y", instruction, (byte) code, arguments[1], arguments[0]);
+			case Indirect:    return String.format("%2$02x %4$02x %3$02x\t%1$s ($%3$02x%4$02x)", instruction, (byte) code, arguments[1], arguments[0]);
+			case IndirectX:   return String.format("%2$02x %3$02x   \t%1$s ($%3$02x,X)",         instruction, (byte) code, arguments[0]);
+			case IndirectY:   return String.format("%2$02x %3$02x   \t%1$s ($%3$02x),Y",         instruction, (byte) code, arguments[0]);
+			default:          return String.format("%2$02x      \t%1$s",                         instruction, (byte) code);
 		}
 	}
 	
 	@Override
 	public String toString() {
-		return toString((byte) 0x00, (byte) 0x00).replace("00", "??");
+		return toString((byte) 0x00, (byte) 0x00);
 	}
 	
 	/**

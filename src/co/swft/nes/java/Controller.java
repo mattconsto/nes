@@ -13,6 +13,7 @@ import javax.imageio.ImageIO;
 import com.stackoverflow.jewelsea.*;
 
 import co.swft.nes.enums.EmulationMode;
+import co.swft.nes.enums.Instruction;
 import co.swft.nes.enums.InstructionSet;
 import javafx.application.Application;
 import javafx.application.Platform;
@@ -186,10 +187,41 @@ public class Controller extends Application {
 		
 		logger.info("Disassembly Starting");
 		
-		for(int i = 0, pc = 0; pc < game.PRG_ROM.length; i++) {
+		int breaks   = 0;
+		int buffer[] = new int[3];
+		
+		for(int i = 0, pc = 0; pc < game.PRG_ROM.length;) {
 			InstructionSet instruction = InstructionSet.lookup(game.PRG_ROM[pc] & 0xff);
+			
+			// Code to cut out repeated BRKs
+			if(instruction.instruction == Instruction.BRK) {
+				if(++breaks > buffer.length) {
+					buffer[breaks % buffer.length] = pc;
+					pc += instruction.length;
+					continue;
+				}
+			} else {
+				if(breaks > buffer.length) {
+					
+					// We don't want to add the ... unless we have at least 6 BRKs
+					if(breaks > 2*buffer.length) {
+						logger.debug("Skipped %x lines while disassembling", breaks - 2*buffer.length);
+						debuggerList.getItems().addAll(new String[] {"", String.format("                	; %x skipped BRKs", breaks - 2*buffer.length), ""});
+						i += 3;
+					}
+					
+					// Math.min to ensure we don't repeat rows.
+					for(int j = 0; j < Math.min(breaks - buffer.length, buffer.length); j++) {
+						int k = (breaks + j + 1) % buffer.length;
+						debuggerList.getItems().add(String.format("$%04x\t%s", buffer[k] + 0x8000, InstructionSet.lookup(game.PRG_ROM[buffer[k]] & 0xff)));
+						instructionMap.put(buffer[k] + 0x8000, i++);
+					}
+				}
+				breaks = 0;
+			}
+			
 			debuggerList.getItems().add(String.format("$%04x\t%s", pc + 0x8000, instruction.toString(game.PRG_ROM[(pc+1)%game.PRG_ROM.length], game.PRG_ROM[(pc+2)%game.PRG_ROM.length])));
-			instructionMap.put(pc + 0x8000, i);
+			instructionMap.put(pc + 0x8000, i++);
 			pc += instruction.length;
 		}
 		
@@ -383,7 +415,7 @@ public class Controller extends Application {
 			
 			disassemble();
 			cpu.addCycleListener(event -> Platform.runLater(() -> {
-				debuggerStatus.setText("Currently executing: " + event.instruction.toString());
+				debuggerStatus.setText(event.instruction.toString());
 				
 				try {
 					int position = instructionMap.get(cpu.state.pc & 0xffff);
