@@ -7,7 +7,7 @@ import com.stackoverflow.jewelsea.Logger;
 
 import co.swft.nes.abstracts.Controlable;
 import co.swft.util.BitTools;
-import javafx.application.Platform;
+import javafx.animation.AnimationTimer;
 import javafx.scene.canvas.Canvas;
 import javafx.scene.image.PixelReader;
 import javafx.scene.image.PixelWriter;
@@ -178,155 +178,149 @@ public class RicohPPU extends Controlable {
 	    if(fps != 0) frameRate = fps;
 	    logger.info("Running at %sHz", frameRate);
 		
-		while(!stopFlag) {
-			long startTime = System.currentTimeMillis();
-			
-			status = BitTools.toggleBit(status, 7);
-			
-			int bg = palletToRGB(readMemoryMap(0x3F00));
-			
-    		// Draw solid background
-    		for(int x = 0; x < image.getWidth(); x++) {
-    			for(int y = 0; y < image.getHeight(); y++) {
-    				imageWriter.setArgb(x, y, bg);
-    			}
-    		}
-    		
-    		// Weird stuff involving the left
-    		
-    		// Draw background
-    		if(BitTools.getBit(mask, 3)) {
-    			int bgAddress = BitTools.getBit(controller, 4) ? 0x1000 : 0x0000; // Ignored in 8x16 mode.
-    			
-    			// Iterate over each nametable
-    			//for(int i = 0; i < 4; i++) {
-    				// Each cell
-    				for(int x = 0; x < 30; x++) {
-    					for(int y = 0; y < 32; y++) {
-    						byte patternid = readMemoryMap(0x2000 + x + y * 30);
-    						if(patternid != 0) {
-    		    				// For each pixel
-    		    				for(int j = 0; j < 8; j++) { // row
-    		    					byte planea = readMemoryMap((patternid << 4) + j);
-    		    					byte planeb = readMemoryMap((patternid << 4) + j + 8);
-    		    					for(int k = 0; k < 8; k++) { // column
-    		    						// Calculate color
-    		    						int color = 0;
-    		    						if(BitTools.getBit(planea, k)) color += 1;
-    		    						if(BitTools.getBit(planeb, k)) color += 2;
-    		    						
-    		    						if(color > 0) {
-    		    							// TODO: stop assuming pallet 0.
-    		    							imageWriter.setArgb(x*8+(8-k), y*8+j, palletToRGB(readMemoryMap(0x3f00 + color)));
-    		    						}
-    		    					}
-    		    				}
-    						}
-    					}
-    				}
-    			//}
-    				
-    		}
-    		
-//    		// Draw sprites
-//    		if(BitTools.getBit(mask, 4) || true) {
-//    			boolean spriteSize    = BitTools.getBit(controller, 5);
-//    			int     spriteAddress = BitTools.getBit(controller, 3) ? 0x1000 : 0x0000; // Ignored in 8x16 mode.
-//    			
-//    			for(int i = 0; i < 256; i+= 4) {
-//    				byte xpos  = OAMRAM[i + 3];
-//    				byte ypos  = OAMRAM[i];
-//    				boolean bank = BitTools.getBit(OAMRAM[i + 1], 1);
-//    				byte index = (byte) (OAMRAM[i + 1] & 0xfc >>> 2);
-//    				
-//    				boolean flipH    = BitTools.getBit(OAMRAM[i + 2], 6);
-//    				boolean flipV    = BitTools.getBit(OAMRAM[i + 2], 7);
-//    				boolean priority = BitTools.getBit(OAMRAM[i + 2], 5);
-//    				int     pallet   = OAMRAM[i + 2] & 0x03;
-//    				
-//					for(int j = 0; j < 8; j++) {
-//						byte data = readMemoryMap(spriteAddress + j);
-//						for(int k = 0; k < 8; k++) {
-//							if(BitTools.getBit(data, k))
-//								imageWriter.setArgb(xpos + j, ypos + k, 0xFFFFFF);
-//						}
-//					}
-//    			}
-//    		}
-    		
-    		// Convert image to greyscale
-    		if(BitTools.getBit(mask, 0)) {
-    			for(int x = 0; x < image.getWidth(); x++) {
-    				for(int y = 0; y < image.getHeight(); y++) {
-    					int rgb   = imageReader.getArgb(x, y);
-    					byte grey = (byte) (0.2989 * (rgb & 0xFF0000 >>> 16) + 0.5870 * (rgb & 0x00FF00 >>> 8) + 0.1140 * (rgb & 0x00FF >>> 0));
-    					rgb       = grey + (grey >>> 8) + (grey >>> 16);
-    					imageWriter.setArgb(x, y, rgb);
-    				}
-    			}
-    		}
-    		
-    		// Intensify reds (and darken other colours)
-    		if(BitTools.getBit(mask, 5)) {
-    			for(int x = 0; x < image.getWidth(); x++) {
-    				for(int y = 0; y < image.getHeight(); y++) {
-    					int  rgb = imageReader.getArgb(x, y);
-    					byte a[] = {(byte) (rgb & 0xFF0000 >>> 16), (byte) (rgb & 0x00FF00 >>> 8), (byte) (rgb & 0x00FF >>> 0)};
-    					a[0]    *= 1.2;
-    					a[1]    *= 0.8;
-    					a[2]    *= 0.8;
-    					rgb      = a[0] << 16 + a[1] << 8 + a[0];
-    					imageWriter.setArgb(x, y, rgb);
-    				}
-    			}
-    		}
-    		
-    		// Intensify greens (and darken other colours)
-    		if(BitTools.getBit(mask, 6)) {
-    			for(int x = 0; x < image.getWidth(); x++) {
-    				for(int y = 0; y < image.getHeight(); y++) {
-    					int  rgb = imageReader.getArgb(x, y);
-    					byte a[] = {(byte) (rgb & 0xFF0000 >>> 16), (byte) (rgb & 0x00FF00 >>> 8), (byte) (rgb & 0x00FF >>> 0)};
-    					a[0]    *= 0.8;
-    					a[1]    *= 1.2;
-    					a[2]    *= 0.8;
-    					rgb      = a[0] << 16 + a[1] << 8 + a[0];
-    					imageWriter.setArgb(x, y, rgb);
-    				}
-    			}
-    		}
-    		
-    		// Intensify blues (and darken other colours)
-    		if(BitTools.getBit(mask, 7)) {
-    			for(int x = 0; x < image.getWidth(); x++) {
-    				for(int y = 0; y < image.getHeight(); y++) {
-    					int  rgb = imageReader.getArgb(x, y);
-    					byte a[] = {(byte) (rgb & 0xFF0000 >>> 16), (byte) (rgb & 0x00FF00 >>> 8), (byte) (rgb & 0x00FF >>> 0)};
-    					a[0]    *= 0.8;
-    					a[1]    *= 0.8;
-    					a[2]    *= 1.2;
-    					rgb      = a[0] << 16 + a[1] << 8 + a[0];
-    					imageWriter.setArgb(x, y, rgb);
-    				}
-    			}
-    		}
-    		
-    		if(canvas != null && image != null) {
-    			canvas.getGraphicsContext2D().drawImage(image, 0, 0);
-    		} else {
-    			logger.warn("Unable to update picture");
-    		}
-    		
-			long delta = (1000 / frameRate) - (System.currentTimeMillis() - startTime);
-			if (delta > 0)
-				try {
-					Thread.sleep(delta);
-				} catch (InterruptedException e) {
-	    			logger.warn("Sleep Interrupted, framerate may be unstable.");
-				}
-
-			checkBlocking();
-		}
+	    AnimationTimer timer = new AnimationTimer() {
+			@Override public void handle(long now) {
+				status = BitTools.toggleBit(status, 7);
+				
+				int bg = palletToRGB(readMemoryMap(0x3F00));
+				
+	    		// Draw solid background
+	    		for(int x = 0; x < image.getWidth(); x++) {
+	    			for(int y = 0; y < image.getHeight(); y++) {
+	    				imageWriter.setArgb(x, y, bg);
+	    			}
+	    		}
+	    		
+	    		// Weird stuff involving the left
+	    		
+	    		// Draw background
+	    		if(BitTools.getBit(mask, 3)) {
+	    			int bgAddress = BitTools.getBit(controller, 4) ? 0x1000 : 0x0000; // Ignored in 8x16 mode.
+	    			
+	    			// Iterate over each nametable
+	    			//for(int i = 0; i < 4; i++) {
+	    				// Each cell
+	    				for(int x = 0; x < 30; x++) {
+	    					for(int y = 0; y < 32; y++) {
+	    						byte patternid = readMemoryMap(0x2000 + x + y * 30);
+	    						if(patternid != 0) {
+	    		    				// For each pixel
+	    		    				for(int j = 0; j < 8; j++) { // row
+	    		    					byte planea = readMemoryMap((patternid << 4) + j);
+	    		    					byte planeb = readMemoryMap((patternid << 4) + j + 8);
+	    		    					for(int k = 0; k < 8; k++) { // column
+	    		    						// Calculate color
+	    		    						int color = 0;
+	    		    						if(BitTools.getBit(planea, k)) color += 1;
+	    		    						if(BitTools.getBit(planeb, k)) color += 2;
+	    		    						
+	    		    						if(color > 0) {
+	    		    							// TODO: stop assuming pallet 0.
+	    		    							imageWriter.setArgb(x*8+(8-k), y*8+j, palletToRGB(readMemoryMap(0x3f00 + color)));
+	    		    						}
+	    		    					}
+	    		    				}
+	    						}
+	    					}
+	    				}
+	    			//}
+	    				
+	    		}
+	    		
+	    		// Draw sprites
+	    		if(BitTools.getBit(mask, 4) || true) {
+	    			boolean spriteSize    = BitTools.getBit(controller, 5);
+	    			int     spriteAddress = BitTools.getBit(controller, 3) ? 0x1000 : 0x0000; // Ignored in 8x16 mode.
+	    			
+	    			for(int i = 0; i < 256; i+= 4) {
+	    				byte xpos  = OAMRAM[i + 3];
+	    				byte ypos  = OAMRAM[i];
+	    				boolean bank = BitTools.getBit(OAMRAM[i + 1], 1);
+	    				byte index = (byte) (OAMRAM[i + 1] & 0xfc >>> 2);
+	    				
+	    				boolean flipH    = BitTools.getBit(OAMRAM[i + 2], 6);
+	    				boolean flipV    = BitTools.getBit(OAMRAM[i + 2], 7);
+	    				boolean priority = BitTools.getBit(OAMRAM[i + 2], 5);
+	    				int     pallet   = OAMRAM[i + 2] & 0x03;
+	    				
+						for(int j = 0; j < 8; j++) {
+							byte data = readMemoryMap(spriteAddress + j);
+							for(int k = 0; k < 8; k++) {
+								if(BitTools.getBit(data, k))
+									imageWriter.setArgb(xpos + j, ypos + k, 0xFFFFFF);
+							}
+						}
+	    			}
+	    		}
+	    		
+	    		// Convert image to greyscale
+	    		if(BitTools.getBit(mask, 0)) {
+	    			for(int x = 0; x < image.getWidth(); x++) {
+	    				for(int y = 0; y < image.getHeight(); y++) {
+	    					int rgb   = imageReader.getArgb(x, y);
+	    					byte grey = (byte) (0.2989 * (rgb & 0xFF0000 >>> 16) + 0.5870 * (rgb & 0x00FF00 >>> 8) + 0.1140 * (rgb & 0x00FF >>> 0));
+	    					rgb       = grey + (grey >>> 8) + (grey >>> 16);
+	    					imageWriter.setArgb(x, y, rgb);
+	    				}
+	    			}
+	    		}
+	    		
+	    		// Intensify reds (and darken other colours)
+	    		if(BitTools.getBit(mask, 5)) {
+	    			for(int x = 0; x < image.getWidth(); x++) {
+	    				for(int y = 0; y < image.getHeight(); y++) {
+	    					int  rgb = imageReader.getArgb(x, y);
+	    					byte a[] = {(byte) (rgb & 0xFF0000 >>> 16), (byte) (rgb & 0x00FF00 >>> 8), (byte) (rgb & 0x00FF >>> 0)};
+	    					a[0]    *= 1.2;
+	    					a[1]    *= 0.8;
+	    					a[2]    *= 0.8;
+	    					rgb      = a[0] << 16 + a[1] << 8 + a[0];
+	    					imageWriter.setArgb(x, y, rgb);
+	    				}
+	    			}
+	    		}
+	    		
+	    		// Intensify greens (and darken other colours)
+	    		if(BitTools.getBit(mask, 6)) {
+	    			for(int x = 0; x < image.getWidth(); x++) {
+	    				for(int y = 0; y < image.getHeight(); y++) {
+	    					int  rgb = imageReader.getArgb(x, y);
+	    					byte a[] = {(byte) (rgb & 0xFF0000 >>> 16), (byte) (rgb & 0x00FF00 >>> 8), (byte) (rgb & 0x00FF >>> 0)};
+	    					a[0]    *= 0.8;
+	    					a[1]    *= 1.2;
+	    					a[2]    *= 0.8;
+	    					rgb      = a[0] << 16 + a[1] << 8 + a[0];
+	    					imageWriter.setArgb(x, y, rgb);
+	    				}
+	    			}
+	    		}
+	    		
+	    		// Intensify blues (and darken other colours)
+	    		if(BitTools.getBit(mask, 7)) {
+	    			for(int x = 0; x < image.getWidth(); x++) {
+	    				for(int y = 0; y < image.getHeight(); y++) {
+	    					int  rgb = imageReader.getArgb(x, y);
+	    					byte a[] = {(byte) (rgb & 0xFF0000 >>> 16), (byte) (rgb & 0x00FF00 >>> 8), (byte) (rgb & 0x00FF >>> 0)};
+	    					a[0]    *= 0.8;
+	    					a[1]    *= 0.8;
+	    					a[2]    *= 1.2;
+	    					rgb      = a[0] << 16 + a[1] << 8 + a[0];
+	    					imageWriter.setArgb(x, y, rgb);
+	    				}
+	    			}
+	    		}
+	    		
+	    		if(canvas != null && image != null) {
+	    			canvas.getGraphicsContext2D().drawImage(image, 0, 0);
+	    		} else {
+	    			logger.warn("Unable to update picture");
+	    		}
+				
+				if(stopFlag) stop();
+			}
+		};
+		
+		timer.start();
 	}
 	
 	public static int palletToRGB(byte input) {
