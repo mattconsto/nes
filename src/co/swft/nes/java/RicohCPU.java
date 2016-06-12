@@ -150,18 +150,18 @@ public class RicohCPU extends Controlable {
 				state.setNegativeFlag(b);
 				state.setNegativeFlag(b);
 			} break;
-			case BCC: if(!state.getCarryFlag())    {state.pc = state.address(instr.addr, -instr.length); if(debugMode) logger.debug("BCC to %x", state.pc);} break;
-			case BCS: if( state.getCarryFlag())    {state.pc = state.address(instr.addr, -instr.length); if(debugMode) logger.debug("BCS to %x", state.pc);} break;
-			case BEQ: if( state.getZeroFlag())     {state.pc = state.address(instr.addr, -instr.length); if(debugMode) logger.debug("BEQ to %x", state.pc);} break;
+			case BCC: if(!state.getCarryFlag())    {state.pc = state.address(instr.addr); if(debugMode) logger.debug("BCC to %x", state.pc);} break;
+			case BCS: if( state.getCarryFlag())    {state.pc = state.address(instr.addr); if(debugMode) logger.debug("BCS to %x", state.pc);} break;
+			case BEQ: if( state.getZeroFlag())     {state.pc = state.address(instr.addr); if(debugMode) logger.debug("BEQ to %x", state.pc);} break;
 			case BIT: {
 				byte b = (byte) (state.a & state.read(instr.addr));
 				state.setNegativeFlag(b);
 				state.setOverflowFlag((b & 0x40) != 0);
 				state.setZeroFlag(b);
 			} break;
-			case BMI: if( state.getNegativeFlag()) {state.pc = state.address(instr.addr, -instr.length); if(debugMode) logger.debug("BMI to %x", state.pc);} break;
-			case BNE: if(!state.getZeroFlag())     {state.pc = state.address(instr.addr, -instr.length); if(debugMode) logger.debug("BNE to %x", state.pc);} break;
-			case BPL: if(!state.getNegativeFlag()) {state.pc = state.address(instr.addr, -instr.length); if(debugMode) logger.debug("BPL to %x", state.pc);} break;
+			case BMI: if( state.getNegativeFlag()) {state.pc = state.address(instr.addr); if(debugMode) logger.debug("BMI to %x", state.pc);} break;
+			case BNE: if(!state.getZeroFlag())     {state.pc = state.address(instr.addr); if(debugMode) logger.debug("BNE to %x", state.pc);} break;
+			case BPL: if(!state.getNegativeFlag()) {state.pc = state.address(instr.addr); if(debugMode) logger.debug("BPL to %x", state.pc);} break;
 			case BRK: {
 				state.pc = Unsigned.inc(state.pc);
 				state.pushStack((byte) ((state.pc & 0xFF00) >>> 8));
@@ -172,8 +172,8 @@ public class RicohCPU extends Controlable {
 				
 				logger.debug("Force Interupt");
 			} break;
-			case BVC: if(!state.getOverflowFlag()) {state.pc = state.address(instr.addr, -instr.length); if(debugMode) logger.debug("BVC to %x", state.pc);} break;
-			case BVS: if( state.getOverflowFlag()) {state.pc = state.address(instr.addr, -instr.length); if(debugMode) logger.debug("BVS to %x", state.pc);} break;
+			case BVC: if(!state.getOverflowFlag()) {state.pc = state.address(instr.addr); if(debugMode) logger.debug("BVC to %x", state.pc);} break;
+			case BVS: if( state.getOverflowFlag()) {state.pc = state.address(instr.addr); if(debugMode) logger.debug("BVS to %x", state.pc);} break;
 			case CLC: state.setCarryFlag    (false); break;
 			case CLD: state.setDecimalFlag  (false); break;
 			case CLI: state.setInterruptFlag(false); break;
@@ -295,10 +295,13 @@ public class RicohCPU extends Controlable {
 			} break;
 			case RTI: {
 				state.s  = state.pullStack();
-				state.pc = Unsigned.sub((short) (state.pullStack() | (state.pullStack() << 8)), (short) instr.length); 
+				state.pc = Unsigned.sub(Unsigned.or(state.pullStack(), Unsigned.shiftl(state.pullStack(), (short) 8)), (short) instr.length); 
 				if(debugMode) logger.debug("RTI to %x", state.pc);
 			} break;
-			case RTS: {state.pc = Unsigned.sub((short) (((state.pullStack() | (state.pullStack() << 8)) & 0xffff) + 1), (short) instr.length); if(debugMode) logger.debug("RTS to %x", state.pc);} break;
+			case RTS: {
+				state.pc = Unsigned.add(Unsigned.or(state.pullStack(), Unsigned.shiftl(state.pullStack(), (short) 8)), (short) 3);
+				if(debugMode) logger.debug("RTS to %x", state.pc);
+			} break;
 			case SBC: {
 				int t = state.a - state.read(instr.addr) - (state.getCarryFlag() ? 0 : 1);
 				state.setOverflowFlag(t > 127 || t < -128);

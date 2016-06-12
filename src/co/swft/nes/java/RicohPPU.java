@@ -7,6 +7,7 @@ import com.stackoverflow.jewelsea.Logger;
 
 import co.swft.nes.abstracts.Controlable;
 import co.swft.util.BitTools;
+import javafx.application.Platform;
 import javafx.scene.canvas.Canvas;
 import javafx.scene.image.PixelReader;
 import javafx.scene.image.PixelWriter;

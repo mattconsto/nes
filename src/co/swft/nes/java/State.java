@@ -74,7 +74,7 @@ public class State implements Cloneable {
 	 * Two methods that allow you too simply give them the byte, and they will calculate the flag
 	 * themselves. Saves a little typing.
 	 */
-	public void setZeroFlag(byte d)         {setZeroFlag(d == 0);;}
+	public void setZeroFlag(byte d)         {setZeroFlag((d & 0xff) == 0);}
 	public void setNegativeFlag(byte d)     {setNegativeFlag((d & 0x80) != 0);}
 	
 
@@ -86,6 +86,7 @@ public class State implements Cloneable {
 	 */
 	public void pushStack(byte input) {
 		this.ram[0x0100 + (this.sp & 0xFF)] = input;
+		logger.debug("Push %02x %02x", this.sp, this.ram[0x0100 + (this.sp & 0xFF)]);
 		this.sp = (byte) ((this.sp & 0xFF) - 1);
 	}
 	
@@ -97,6 +98,7 @@ public class State implements Cloneable {
 	 */
 	public byte pullStack() {
 		this.sp = (byte) ((this.sp & 0xFF) + 1);
+		logger.debug("Pull %02x %02x", this.sp, this.ram[0x0100 + (this.sp & 0xFF)]);
 		return this.ram[0x0100 + (this.sp & 0xFF)];
 	}
 	
