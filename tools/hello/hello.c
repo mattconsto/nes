@@ -18,14 +18,14 @@ void write_string(char *str)
 	*((unsigned char*)0x2006) = 0x20;
 	*((unsigned char*)0x2006) = 0x41;
 	/* Write the string */
-	//while(*str)
-	//{
+	while(*str)
+	{
 		/* Write a letter */
 		/* The compiler put a set of graphics that match ASCII */
 		*((unsigned char*)0x2007) = *str;
 		/* Advance pointer that reads from the string */
-	//	str++;
-	//}
+		str++;
+	}
 }
 
 /* Program entry */

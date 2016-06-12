@@ -1,9 +1,9 @@
 @rem compile C source file with given name into NES file
 @rem useful to compile few projects at once without repeating the build script
 
-@set CC65_HOME=..\
+@set CC65_HOME=..\cc65\
 
-@if "%PATH%"=="%PATH:cc65=%" @PATH=%PATH%;%CC65_HOME%bin\
+@PATH=%PATH%;%CC65_HOME%bin\
 
 @ca65 crt0.s || goto fail
 
