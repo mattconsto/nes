@@ -25,16 +25,20 @@ public class State implements Cloneable {
 	
 	private Logger logger;
 
-	public State(Log log) {
+	public State(Log log, NESCartridge game, RicohPPU ppu, RicohAPU apu) {
 		this.logger = new AlertLogger(log, "Sta");
-	}
-	
-	public State(NESCartridge game, RicohPPU ppu, RicohAPU apu, byte[] ram, short pc, byte sp, byte a, byte x, byte y, byte s, Log log) {
-		this(log);
 		
 		this.game = game;
 		this.ppu = ppu;
 		this.apu = apu;
+		
+		// Read the Reset Vector
+		this.pc = rstVector();
+		logger.info("Reset vector loaded as %x", this.pc);
+	}
+	
+	public State(NESCartridge game, RicohPPU ppu, RicohAPU apu, byte[] ram, short pc, byte sp, byte a, byte x, byte y, byte s, Log log) {
+		this(log, game, ppu, apu);
 
 		this.ram = ram;
 		this.pc = pc;
@@ -43,8 +47,13 @@ public class State implements Cloneable {
 		this.x = x;
 		this.y = y;
 		this.s = s;
-
 	}
+	
+	public short nmiVector() {return Unsigned.make(readMemoryMap(0xfffa), readMemoryMap(0xfffb));}
+	
+	public short rstVector() {return Unsigned.make(readMemoryMap(0xfffc), readMemoryMap(0xfffd));}
+	
+	public short irqVector() {return Unsigned.make(readMemoryMap(0xfffe), readMemoryMap(0xffff));}
 
 	/*
 	 * Methods to retrieve bits from the status register. Calling them will return a boolean value
@@ -86,7 +95,7 @@ public class State implements Cloneable {
 	 */
 	public void pushStack(byte input) {
 		this.ram[0x0100 + (this.sp & 0xFF)] = input;
-		logger.debug("Push %02x %02x", this.sp, this.ram[0x0100 + (this.sp & 0xFF)]);
+//		logger.debug("Push %02x %02x", this.sp, this.ram[0x0100 + (this.sp & 0xFF)]);
 		this.sp = (byte) ((this.sp & 0xFF) - 1);
 	}
 	
@@ -98,7 +107,7 @@ public class State implements Cloneable {
 	 */
 	public byte pullStack() {
 		this.sp = (byte) ((this.sp & 0xFF) + 1);
-		logger.debug("Pull %02x %02x", this.sp, this.ram[0x0100 + (this.sp & 0xFF)]);
+//		logger.debug("Pull %02x %02x", this.sp, this.ram[0x0100 + (this.sp & 0xFF)]);
 		return this.ram[0x0100 + (this.sp & 0xFF)];
 	}
 	

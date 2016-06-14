@@ -60,7 +60,7 @@ public enum InstructionSet {
 	EOR_59_AbsoluteY	(Instruction.EOR,	AddressingMode.AbsoluteY,	0x59,	3,	4,	true ),
 	EOR_41_IndirectX	(Instruction.EOR,	AddressingMode.IndirectX,	0x41,	2,	6,	false),
 	EOR_51_IndirectY	(Instruction.EOR,	AddressingMode.IndirectY,	0x51,	2,	5,	true ),
-	CLC_18_Implied		(Instruction.BPL,	AddressingMode.Immediate,	0x18,	1,	2,	false),
+	CLC_18_Implied		(Instruction.CLC,	AddressingMode.Implied,		0x18,	1,	2,	false),
 	SEC_38_Implied		(Instruction.SEC,	AddressingMode.Implied,		0x38,	1,	2,	false),
 	CLI_58_Implied		(Instruction.CLI,	AddressingMode.Implied,		0x58,	1,	2,	false),
 	SEI_78_Implied		(Instruction.SEI,	AddressingMode.Implied,		0x78,	1,	2,	false),

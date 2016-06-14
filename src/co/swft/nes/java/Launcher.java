@@ -28,6 +28,7 @@ public class Launcher {
 		} catch(Exception e) {
 			try {
 				logger.error(e.getMessage());
+				e.printStackTrace();
 				new Alert(AlertType.ERROR, "An irrecoverable error has occured, check Error.log for details", ButtonType.CLOSE);
 			} catch(Exception ignored) {}
 			

@@ -13,7 +13,6 @@ import javax.imageio.ImageIO;
 import com.stackoverflow.jewelsea.*;
 
 import co.swft.nes.enums.EmulationMode;
-import co.swft.nes.enums.Instruction;
 import co.swft.nes.enums.InstructionSet;
 import javafx.application.Application;
 import javafx.application.Platform;
@@ -24,11 +23,14 @@ import javafx.embed.swing.SwingFXUtils;
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;
+import javafx.scene.Node;
 import javafx.scene.Parent;
 import javafx.scene.Scene;
 import javafx.scene.canvas.Canvas;
 import javafx.scene.control.*;
 import javafx.scene.image.PixelWriter;
+import javafx.scene.image.WritableImage;
+import javafx.scene.input.KeyCode;
 import javafx.scene.layout.BorderPane;
 import javafx.stage.FileChooser;
 import javafx.stage.Stage;
@@ -56,7 +58,8 @@ import javafx.util.Callback;
  * @author Matthew Consterdine
  */
 public class Controller extends Application {
-	private Stage stage;
+	private static Stage stage;
+	@FXML private Node root;
 	private Logger logger = new AlertLogger(co.swft.nes.java.Launcher.logger.log, "App");
 	
 	private NESCartridge game;
@@ -65,6 +68,8 @@ public class Controller extends Application {
 	private RicohPPU ppu;
 	private RicohCPU cpu;
 
+	@FXML private MenuBar menuBar;
+	
 	@FXML private BorderPane emulationContainer;
 	@FXML private Canvas emulationCanvas;
 
@@ -129,7 +134,7 @@ public class Controller extends Application {
 	private Map<Integer, Integer> instructionMap = new ConcurrentHashMap<>();
 	
 	@Override public void start(Stage stage) throws Exception {
-		this.stage = stage;
+		Controller.stage = stage;
 		
 		Parent root = FXMLLoader.load(getClass().getResource("/co/swft/nes/ui/emulation.fxml"));
 
@@ -156,8 +161,8 @@ public class Controller extends Application {
 	
 	private void generateSprites() {
 		if(ppu == null) return;
-		
-		PixelWriter writer = spritesCanvas.getGraphicsContext2D().getPixelWriter();
+		WritableImage image  = new WritableImage(280, 144);
+		PixelWriter   writer = image.getPixelWriter();
 		byte[] defaultPallet = new byte[] {0x3f, 0x06, 0x02, 0x30};
 		int pallet = spritesPallet.getSelectionModel().getSelectedItem();
 		
@@ -174,54 +179,66 @@ public class Controller extends Application {
 					} else {
 						color = ppu.readMemoryMap(value == 0 ? 0x3f00 : 0x3f10 + pallet*4 + value);
 					}
-					writer.setArgb(((sprite % 16) * 8) + bit + (sprite / 256) * 136, (((sprite % 256) / 16) * 8) + line, RicohPPU.palletToRGB(color));
+					writer.setArgb(((sprite % 16) * 8) + bit + (sprite / 256) * 136 + 8, (((sprite % 256) / 16) * 8) + line + 8, RicohPPU.palletToRGB(color));
 				}
 			}
 		}
+
+		spritesCanvas.getGraphicsContext2D().clearRect(0, 0, spritesCanvas.getWidth(), spritesCanvas.getHeight());
+		spritesCanvas.getGraphicsContext2D().drawImage(image, 0, 0, spritesCanvas.getWidth(), spritesCanvas.getHeight());
 		
 		logger.info("Sprites generated using pallet " + pallet);
 	}
 	
 	private void disassemble() {
 		instructionMap.clear();
+		debuggerList.getItems().clear();
 		
 		logger.info("Disassembly Starting");
 		
-		int breaks   = 0;
-		int buffer[] = new int[3];
 		
-		for(int i = 0, pc = 0; pc < game.PRG_ROM.length;) {
-			InstructionSet instruction = InstructionSet.lookup(game.PRG_ROM[pc] & 0xff);
+		int countBRK    = 0;
+		int bufferBRK[] = new int[3];
+		
+		int i = 0;
+		int pc = cpu.state.rstVector() & 0xffff;
+		
+		System.out.println(pc);
+		
+		while(pc >= 0x0000 && pc <= 0xffff) {
+			InstructionSet instruction = InstructionSet.lookup(cpu.state.readMemoryMap(pc));
 			
 			// Code to cut out repeated BRKs
-			if(instruction.instruction == Instruction.BRK) {
-				if(++breaks > buffer.length) {
-					buffer[breaks % buffer.length] = pc;
+			if(instruction == InstructionSet.BRK_00_Implied) {
+				if(++countBRK > bufferBRK.length) {
+					bufferBRK[countBRK % bufferBRK.length] = pc;
 					pc += instruction.length;
 					continue;
 				}
+			// } else if(instruction == InstructionSet.ISC_FF_AbsoluteX) {
+			//
 			} else {
-				if(breaks > buffer.length) {
+				if(countBRK > bufferBRK.length) {
 					
 					// We don't want to add the ... unless we have at least 6 BRKs
-					if(breaks > 2*buffer.length) {
-						logger.debug("Skipped %x lines while disassembling", breaks - 2*buffer.length);
-						debuggerList.getItems().addAll(new String[] {"", String.format("                	; %x skipped BRKs", breaks - 2*buffer.length), ""});
+					if(countBRK > 2*bufferBRK.length) {
+						logger.debug("Skipped %x lines while disassembling", countBRK - 2*bufferBRK.length);
+						debuggerList.getItems().addAll(new String[] {"", String.format("                	; %x skipped BRKs", countBRK - 2*bufferBRK.length), ""});
 						i += 3;
 					}
 					
 					// Math.min to ensure we don't repeat rows.
-					for(int j = 0; j < Math.min(breaks - buffer.length, buffer.length); j++) {
-						int k = (breaks + j + 1) % buffer.length;
-						debuggerList.getItems().add(String.format("$%04x\t%s", buffer[k] + 0x8000, InstructionSet.lookup(game.PRG_ROM[buffer[k]] & 0xff)));
-						instructionMap.put(buffer[k] + 0x8000, i++);
+					for(int j = 0; j < Math.min(countBRK - bufferBRK.length, bufferBRK.length); j++) {
+						int k = (countBRK + j + 1) % bufferBRK.length;
+						debuggerList.getItems().add(String.format("$%04x\t%s", bufferBRK[k], InstructionSet.lookup(cpu.state.readMemoryMap(bufferBRK[k]))));
+						instructionMap.put(bufferBRK[k], i++);
 					}
 				}
-				breaks = 0;
+				countBRK = 0;
 			}
 			
-			debuggerList.getItems().add(String.format("$%04x\t%s", pc + 0x8000, instruction.toString(game.PRG_ROM[(pc+1)%game.PRG_ROM.length], game.PRG_ROM[(pc+2)%game.PRG_ROM.length])));
-			instructionMap.put(pc + 0x8000, i++);
+			debuggerList.getItems().add(String.format("$%04x\t%s", pc, instruction.toString(cpu.state.readMemoryMap(pc+1), cpu.state.readMemoryMap(pc+2))));
+			instructionMap.put(pc, i++);
 			pc += instruction.length;
 		}
 		
@@ -229,12 +246,12 @@ public class Controller extends Application {
 	}
 
 	@FXML protected void initialize() {
-		LogView logView = new LogView(logger);
-		
-		emulationContainer.setOnScroll(e -> {
-			emulationCanvas.setScaleX(Math.max(0.25, Math.min(64, emulationCanvas.getScaleX() + e.getDeltaY() / 100)));
-			emulationCanvas.setScaleY(Math.max(0.25, Math.min(64, emulationCanvas.getScaleY() + e.getDeltaY() / 100)));
+		root.setOnKeyPressed(e -> {
+			if(e.getCode() == KeyCode.F11) fileFullScreen(new ActionEvent()); 
 		});
+		menuBar.managedProperty().bind(menuBar.visibleProperty());
+		
+		LogView logView = new LogView(logger);
 		
 		infoProperty.setCellValueFactory(new Callback<TableColumn.CellDataFeatures<Field, String>, ObservableValue<String>>() {
 			@Override public ObservableValue<String> call(TableColumn.CellDataFeatures<Field, String> p) {
@@ -411,7 +428,10 @@ public class Controller extends Application {
 			ppu = new RicohPPU(logger.log, emulationCanvas, game);
 			cpu = new RicohCPU(logger.log, game, ppu, apu);
 
+			cpu.mode = EmulationMode.DEFAULT;
+			
 			debuggerEnable.setOnAction(e -> cpu.debugMode = debuggerEnable.isSelected());
+			
 			
 			disassemble();
 			cpu.addCycleListener(event -> Platform.runLater(() -> {
@@ -476,6 +496,13 @@ public class Controller extends Application {
 			logger.warn("Failed to load Cartridge");
 			e.printStackTrace();
 		}
+	}
+	
+	@FXML protected void fileFullScreen(ActionEvent event) {
+		logger.info("Toggling FullScreen");
+		
+		menuBar.setVisible(!menuBar.isVisible());
+		stage.setFullScreen(!stage.isFullScreen());
 	}
 
 	@FXML protected void fileClose(ActionEvent event) {

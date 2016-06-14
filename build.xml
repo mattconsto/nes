@@ -1,12 +1,16 @@
 <?xml version="1.0" encoding="UTF-8" standalone="no"?>
-<project default="create_run_jar" name="Create Runnable Jar for the Emulator">
+<project default="create_run_jar" name="Create Runnable Jar for Emulator">
     <target name="create_run_jar">
-        <jar destfile="Emulator.jar" filesetmanifest="mergewithoutmain">
+        <jar destfile="emulator.jar" filesetmanifest="mergewithoutmain">
             <manifest>
                 <attribute name="Main-Class" value="Main"/>
                 <attribute name="Class-Path" value="."/>
             </manifest>
             <fileset dir="bin"/>
+            <zipgroupfileset dir="libs">
+                <include name="*.jar"/>
+                <exclude name="docs/*"/>
+            </zipgroupfileset>
         </jar>
     </target>
 </project>

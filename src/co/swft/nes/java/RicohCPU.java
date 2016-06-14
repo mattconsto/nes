@@ -11,6 +11,7 @@ import co.swft.nes.enums.EmulationMode;
 import co.swft.nes.enums.Instruction;
 import co.swft.nes.enums.InstructionSet;
 import co.swft.nes.interfaces.CycleListener;
+import co.swft.util.BitTools;
 
 /**
  * Ricoh CPU (2A03) Emulator for the Nintendo Entertainment System..
@@ -47,10 +48,7 @@ public class RicohCPU extends Controlable {
 	 */
 	public RicohCPU(Log log, NESCartridge game, RicohPPU ppu, RicohAPU apu) {
 		this.logger = new AlertLogger(log, "CPU");
-		this.state = new co.swft.nes.java.State(log);
-		this.state.game  = game;
-		this.state.ppu   = ppu;
-		this.state.apu   = apu;
+		this.state = new co.swft.nes.java.State(log, game, ppu, apu);
 		logger.info("Created");
 	}
 	
@@ -60,6 +58,9 @@ public class RicohCPU extends Controlable {
 	public void run() {
 		while(!stopFlag) {
 			logger.info("Starting Emulation in %s mode", mode.toString());
+			
+			// Skip forward at the start, horrible hack
+//			while(InstructionSet.lookup(state.readMemoryMap(state.pc)) == InstructionSet.BRK_00_Implied) state.pc++;
 			
 			switch(mode) {
 			case DEFAULT:
@@ -127,6 +128,19 @@ public class RicohCPU extends Controlable {
 	}
 	
 	public void executeInstruction(InstructionSet instr) {
+		// NMI Interrupts
+		if(BitTools.getBit(state.ppu.status, 7) && BitTools.getBit(state.ppu.controller, 7)) {
+			state.pushStack((byte) ((state.pc & 0xFF00) >>> 8));
+			state.pushStack((byte) (state.pc & 0x00FF));
+			state.pushStack(state.s);
+			state.pc = state.nmiVector();
+			state.ppu.status = BitTools.setBit(state.ppu.status, 7, false);
+			
+			logger.debug("NMI Interupt");
+			
+			return;
+		}
+		
 		switch (instr.instruction) {
 			/* Documented */
 			case ADC: {
@@ -167,7 +181,7 @@ public class RicohCPU extends Controlable {
 				state.pushStack((byte) ((state.pc & 0xFF00) >>> 8));
 				state.pushStack((byte) (state.pc & 0x00FF));
 				state.pushStack(state.s);
-				state.pc = Unsigned.sub((short) (state.readMemoryMap((short) 0xFFFE) | (state.readMemoryMap((short) 0xFFFF) << 8)), (short) instr.length);
+				state.pc = Unsigned.sub(state.irqVector(), (short) instr.length);
 				state.setBreakFlag(true);
 				
 				logger.debug("Force Interupt");
@@ -392,6 +406,7 @@ public class RicohCPU extends Controlable {
 			case KIL: {
 				logger.warn("Undocumented Instruction: " + instr.instruction);
 				state.pc = Unsigned.sub(state.pc, (short) instr.length);
+				pauseMonitor();
 			} break;
 			case LAR: {
 				logger.warn("Undocumented Instruction: " + instr.instruction);

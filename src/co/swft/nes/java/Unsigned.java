@@ -18,6 +18,7 @@ public class Unsigned {
 	public static long   un (int     a)            {return Integer.toUnsignedLong  (a);}
 	public static String un (long    a)            {return Long   .toUnsignedString(a);}
 	
+	public static short  make(byte low, byte high) {return Unsigned.or(low, Unsigned.shiftl(high, (short) 8));}
 	public static byte   high(short   a)           {return (byte) (a >>> 8);}
 	public static byte   low (short   a)           {return (byte) a;}
 	
