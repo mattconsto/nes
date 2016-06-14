@@ -199,58 +199,51 @@ public class RicohPPU extends Controlable {
 	    			// Iterate over each nametable
 	    			//for(int i = 0; i < 4; i++) {
 	    				// Each cell
-	    				for(int x = 0; x < 30; x++) {
-	    					for(int y = 0; y < 32; y++) {
-	    						byte patternid = readMemoryMap(0x2000 + x + y * 30);
-	    						if(patternid != 0) {
-	    		    				// For each pixel
-	    		    				for(int j = 0; j < 8; j++) { // row
-	    		    					byte planea = readMemoryMap((patternid << 4) + j);
-	    		    					byte planeb = readMemoryMap((patternid << 4) + j + 8);
-	    		    					for(int k = 0; k < 8; k++) { // column
-	    		    						// Calculate color
-	    		    						int color = 0;
-	    		    						if(BitTools.getBit(planea, k)) color += 1;
-	    		    						if(BitTools.getBit(planeb, k)) color += 2;
-	    		    						
-	    		    						if(color > 0) {
-	    		    							// TODO: stop assuming pallet 0.
-	    		    							imageWriter.setArgb(x*8+(8-k), y*8+j, palletToRGB(readMemoryMap(0x3f00 + color)));
-	    		    						}
-	    		    					}
-	    		    				}
+	    				for(int x = 0; x < 32; x++) {
+	    					for(int y = 0; y < 30; y++) {
+	    						byte sprite = readMemoryMap(0x2000 + x + y * 32);
+	    						if(sprite != 0) {
+	    				    		for(int line = 0; line < 8; line++) {
+	    								byte plane1 = readMemoryMap(sprite*16 + line);
+	    								byte plane2 = readMemoryMap(sprite*16 + line + 8);
+	    								
+	    								for(int bit = 0; bit < 8; bit++) {
+	    									int  value = ((plane1 >>> (7 - bit)) & 1) | ((plane2 >>> (7 - bit)) & 1) * 2;
+	    									byte color = readMemoryMap(value == 0 ? 0x3f00 : 0x3f10 + value);
+	    									imageWriter.setArgb(x*8 + bit, y*8 + line, RicohPPU.palletToRGB(color));
+	    								}
+	    							}
 	    						}
 	    					}
 	    				}
-	    			//}
-	    				
+	    			//}		
 	    		}
 	    		
-	    		// Draw sprites
-	    		if(BitTools.getBit(mask, 4) || true) {
-	    			boolean spriteSize    = BitTools.getBit(controller, 5);
-	    			int     spriteAddress = BitTools.getBit(controller, 3) ? 0x1000 : 0x0000; // Ignored in 8x16 mode.
-	    			
-	    			for(int i = 0; i < 256; i+= 4) {
-	    				byte xpos  = OAMRAM[i + 3];
-	    				byte ypos  = OAMRAM[i];
-	    				boolean bank = BitTools.getBit(OAMRAM[i + 1], 1);
-	    				byte index = (byte) (OAMRAM[i + 1] & 0xfc >>> 2);
-	    				
-	    				boolean flipH    = BitTools.getBit(OAMRAM[i + 2], 6);
-	    				boolean flipV    = BitTools.getBit(OAMRAM[i + 2], 7);
-	    				boolean priority = BitTools.getBit(OAMRAM[i + 2], 5);
-	    				int     pallet   = OAMRAM[i + 2] & 0x03;
-	    				
-						for(int j = 0; j < 8; j++) {
-							byte data = readMemoryMap(spriteAddress + j);
-							for(int k = 0; k < 8; k++) {
-								if(BitTools.getBit(data, k))
-									imageWriter.setArgb(xpos + j, ypos + k, 0xFFFFFF);
-							}
-						}
-	    			}
-	    		}
+//	    		// Draw sprites
+//	    		if(BitTools.getBit(mask, 4) || true) {
+//	    			boolean spriteSize    = BitTools.getBit(controller, 5);
+//	    			int     spriteAddress = BitTools.getBit(controller, 3) ? 0x1000 : 0x0000; // Ignored in 8x16 mode.
+//	    			
+//	    			for(int i = 0; i < 256; i+= 4) {
+//	    				byte xpos  = OAMRAM[i + 3];
+//	    				byte ypos  = OAMRAM[i];
+//	    				boolean bank = BitTools.getBit(OAMRAM[i + 1], 1);
+//	    				byte index = (byte) (OAMRAM[i + 1] & 0xfc >>> 2);
+//	    				
+//	    				boolean flipH    = BitTools.getBit(OAMRAM[i + 2], 6);
+//	    				boolean flipV    = BitTools.getBit(OAMRAM[i + 2], 7);
+//	    				boolean priority = BitTools.getBit(OAMRAM[i + 2], 5);
+//	    				int     pallet   = OAMRAM[i + 2] & 0x03;
+//	    				
+//						for(int j = 0; j < 8; j++) {
+//							byte data = readMemoryMap(spriteAddress + j);
+//							for(int k = 0; k < 8; k++) {
+//								if(BitTools.getBit(data, k))
+//									imageWriter.setArgb(xpos + j, ypos + k, 0xFFFFFF);
+//							}
+//						}
+//	    			}
+//	    		}
 	    		
 	    		// Convert image to greyscale
 	    		if(BitTools.getBit(mask, 0)) {

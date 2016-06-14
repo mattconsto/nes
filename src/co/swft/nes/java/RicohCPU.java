@@ -68,7 +68,7 @@ public class RicohCPU extends Controlable {
 					while(!checkMonitor()) {
 						InstructionSet instruction = InstructionSet.lookup(state.readMemoryMap(state.pc));
 						logger.debug("$%04x\t%s", state.pc, instruction.toString(state.readMemoryMap(state.pc+1), state.readMemoryMap(state.pc+2)));
-						fireCycleListeners(new CycleEvent(instruction));
+//						fireCycleListeners(new CycleEvent(instruction));
 						executeInstruction(instruction);
 					}
 				} else {
@@ -81,7 +81,7 @@ public class RicohCPU extends Controlable {
 				if (!checkMonitor()) {
 					InstructionSet instruction = InstructionSet.lookup(state.readMemoryMap(state.pc));
 					logger.debug("$%04x\t%s", state.pc, instruction.toString(state.readMemoryMap(state.pc+1), state.readMemoryMap(state.pc+2)));
-					fireCycleListeners(new CycleEvent(instruction));
+//					fireCycleListeners(new CycleEvent(instruction));
 					executeInstruction(instruction);
 				}
 				break;
@@ -89,7 +89,7 @@ public class RicohCPU extends Controlable {
 				while(!checkMonitor()) {
 					InstructionSet instruction = InstructionSet.lookup(state.readMemoryMap(state.pc));
 					logger.debug("$%04x\t%s", state.pc, instruction.toString(state.readMemoryMap(state.pc+1), state.readMemoryMap(state.pc+2)));
-					fireCycleListeners(new CycleEvent(instruction));
+//					fireCycleListeners(new CycleEvent(instruction));
 					executeInstruction(instruction);
 					
 					if(instruction.instruction == Instruction.RTS) break;
@@ -100,7 +100,7 @@ public class RicohCPU extends Controlable {
 				while(!checkMonitor()) {
 					InstructionSet instruction = InstructionSet.lookup(state.readMemoryMap(state.pc));
 					logger.debug("$%04x\t%s", state.pc, instruction.toString(state.readMemoryMap(state.pc+1), state.readMemoryMap(state.pc+2)));
-					fireCycleListeners(new CycleEvent(instruction));
+//					fireCycleListeners(new CycleEvent(instruction));
 					executeInstruction(instruction);
 					
 					if(instruction.instruction == Instruction.JSR) depth++;
@@ -130,6 +130,7 @@ public class RicohCPU extends Controlable {
 	public void executeInstruction(InstructionSet instr) {
 		// NMI Interrupts
 		if(BitTools.getBit(state.ppu.status, 7) && BitTools.getBit(state.ppu.controller, 7)) {
+			System.out.println(Integer.toHexString(state.pc & 0xffff));
 			state.pushStack((byte) ((state.pc & 0xFF00) >>> 8));
 			state.pushStack((byte) (state.pc & 0x00FF));
 			state.pushStack(state.s);
@@ -140,6 +141,9 @@ public class RicohCPU extends Controlable {
 			
 			return;
 		}
+		
+		// RQI Interrupts
+		// TODO
 		
 		switch (instr.instruction) {
 			/* Documented */
@@ -309,8 +313,8 @@ public class RicohCPU extends Controlable {
 			} break;
 			case RTI: {
 				state.s  = state.pullStack();
-				state.pc = Unsigned.sub(Unsigned.or(state.pullStack(), Unsigned.shiftl(state.pullStack(), (short) 8)), (short) instr.length); 
-				if(debugMode) logger.debug("RTI to %x", state.pc);
+				state.pc = Unsigned.sub(Unsigned.or(state.pullStack(), Unsigned.shiftl(state.pullStack(), (short) 8)), (short) 1); 
+				logger.debug("RTI to %x", state.pc);
 			} break;
 			case RTS: {
 				state.pc = Unsigned.add(Unsigned.or(state.pullStack(), Unsigned.shiftl(state.pullStack(), (short) 8)), (short) 3);

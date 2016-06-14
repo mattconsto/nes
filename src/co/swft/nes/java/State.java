@@ -194,8 +194,6 @@ public class State implements Cloneable {
 		int l = location & 0xFFFF;
 		//System.out.format("Writing %X into %X%n", v, l);
 		
-		if(l >= 0x0100 && l < 0x0200) logger.error("Writing too stack!");
-		
 		if       (l < 0x2000) {
 		    // Direct work ram. Mirrored 3 times
 			this.ram[l % 0x800] = v;
